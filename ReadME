@@ -1,2 +1,3 @@
 # Start App
 npx expo start
+# When Running typ r in the terminal to refresh the app
