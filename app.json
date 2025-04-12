@@ -4,7 +4,7 @@
     "slug": "BetterApp",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/icon.png",
+    "icon": "./assets/homeBetterLogo.png",
     "userInterfaceStyle": "light",
     "newArchEnabled": true,
     "splash": {
