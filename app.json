@@ -1,7 +1,7 @@
 {
   "expo": {
-    "name": "BetterApp",
-    "slug": "BetterApp",
+    "name": "Be Better Man",
+    "slug": "betterApp",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/homeBetterLogo.png",
