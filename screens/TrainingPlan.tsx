@@ -149,6 +149,16 @@ const TrainingPlan = () => {
   const [workoutsByDay, setWorkoutsByDay] = useState(initialWorkouts);
 
   const handleDateConfirm = (date) => {
+    const currentWeekStart = startOfWeek(new Date(), { weekStartsOn: 1 });
+    const nextWeekStart = addDays(currentWeekStart, 7);
+    
+    // Check if selected date is within current week
+    if (date >= nextWeekStart) {
+      alert('You can only move workouts within the current week');
+      setDatePickerVisibility(false);
+      return;
+    }
+
     const newDay = format(date, 'EEEE');
     const updated = { ...workoutsByDay };
 
