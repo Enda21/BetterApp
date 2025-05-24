@@ -2,8 +2,10 @@ import React from 'react';
 import { Image } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
+import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { Ionicons, MaterialCommunityIcons, Feather } from '@expo/vector-icons';
 
+// Screens
 import Home from './screens/Home';
 import TrainingPlan from './screens/TrainingPlan';
 import Courses from './screens/Courses';
@@ -11,6 +13,7 @@ import Calendar from './screens/Calendar';
 import ExternalLinks from './screens/ExternalLinks';
 
 const Tab = createBottomTabNavigator();
+const Stack = createNativeStackNavigator();
 
 export default function App() {
   return (
@@ -22,12 +25,7 @@ export default function App() {
               return (
                 <Image
                   source={require('./assets/homeBetterLogo.png')}
-                  style={{ 
-                    width: 40,
-                    height: 40,
-                    borderRadius: 20,
-                    backgroundColor: 'white', // ensures a white circle
-                  }}
+                  style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: 'white' }}
                 />
               );
             } else if (route.name === 'Training Plan') {

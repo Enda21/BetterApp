@@ -7,11 +7,6 @@
     "icon": "./assets/homeBetterLogo.png",
     "userInterfaceStyle": "light",
     "newArchEnabled": true,
-    "splash": {
-      "image": "./assets/splash-icon.png",
-      "resizeMode": "contain",
-      "backgroundColor": "#ffffff"
-    },
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.brody32.betterapp"
@@ -30,6 +25,12 @@
         "projectId": "5b41f115-f574-4426-ac48-bab34012dd86"
       }
     },
-    "owner": "brody32"
+    "owner": "brody32",
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
+    "updates": {
+      "url": "https://u.expo.dev/5b41f115-f574-4426-ac48-bab34012dd86"
+    }
   }
 }
