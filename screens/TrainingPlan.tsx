@@ -288,7 +288,7 @@ const TrainingPlan = () => {
         <DateTimePicker
           value={new Date()}
           mode="date"
-          display="default"
+          display="calendar"
           minimumDate={startOfWeek(new Date(), { weekStartsOn: 1 })}
           maximumDate={addDays(startOfWeek(new Date(), { weekStartsOn: 1 }), 6)}
           onChange={(event, selectedDate) => {
