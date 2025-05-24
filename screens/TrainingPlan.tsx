@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import {
   View, Text, StyleSheet, TouchableOpacity,
@@ -54,7 +55,6 @@ const initialWorkouts = {
       ]
     }
   ],
-  // Add more days as needed...
   Wednesday: [
     {
       id: '3',
@@ -68,7 +68,6 @@ const initialWorkouts = {
         weight: '',
         notes: '5 KM RUN 5:00km/Min Pace',
         video: ''
-
         }
       ]
     }
@@ -149,35 +148,31 @@ const TrainingPlan = () => {
   const [isDatePickerVisible, setDatePickerVisibility] = useState(false);
   const [workoutsByDay, setWorkoutsByDay] = useState(initialWorkouts);
 
- ///////handDate/////
- const handleDateConfirm = (date) => {
-  const newDay = format(date, 'EEEE');
-  const updated = { ...workoutsByDay };
+  const handleDateConfirm = (date) => {
+    const newDay = format(date, 'EEEE');
+    const updated = { ...workoutsByDay };
 
-  const currentDayWorkouts = updated[selectedDay] || [];
-  const workoutToMove = currentDayWorkouts.find((w) => w.id === selectedWorkoutId);
+    const currentDayWorkouts = updated[selectedDay] || [];
+    const workoutToMove = currentDayWorkouts.find((w) => w.id === selectedWorkoutId);
 
-  if (!workoutToMove) return;
+    if (!workoutToMove) return;
 
-  // Remove from old day
-  updated[selectedDay] = currentDayWorkouts.filter((w) => w.id !== selectedWorkoutId);
+    updated[selectedDay] = currentDayWorkouts.filter((w) => w.id !== selectedWorkoutId);
 
-  // Ensure unique ID by appending timestamp or regenerating
-  const updatedWorkout = {
-    ...workoutToMove,
-    date,
-    id: `${workoutToMove.id}-${Date.now()}`
+    const updatedWorkout = {
+      ...workoutToMove,
+      date,
+      id: `${workoutToMove.id}-${Date.now()}`
+    };
+
+    if (!updated[newDay]) updated[newDay] = [];
+    updated[newDay].push(updatedWorkout);
+
+    setWorkoutsByDay(updated);
+    setSelectedDay(newDay);
+    setDatePickerVisibility(false);
   };
 
-  // Add to new day
-  if (!updated[newDay]) updated[newDay] = [];
-  updated[newDay].push(updatedWorkout);
-
-  setWorkoutsByDay(updated);
-  setSelectedDay(newDay);
-  setDatePickerVisibility(false);
-};
-/////////////
   const handleNoteChange = (index, text) => {
     const updated = { ...workoutsByDay };
     updated[selectedDay][0].exercises[index].notes = text;
@@ -186,73 +181,98 @@ const TrainingPlan = () => {
 
   const renderVideoThumbnail = (url) => {
     if (!url) return null;
+    if (url.includes('typeform.com')) {
+      return (
+        <TouchableOpacity onPress={() => Linking.openURL(url)} style={styles.buttonLink}>
+          <Text style={styles.buttonText}>Open Form</Text>
+        </TouchableOpacity>
+      );
+    }
     const videoId = url.split('v=')[1];
     const thumbnailUrl = `https://img.youtube.com/vi/${videoId}/0.jpg`;
     return (
       <TouchableOpacity onPress={() => Linking.openURL(url)} style={styles.videoContainer}>
         <Image source={{ uri: thumbnailUrl }} style={styles.thumbnail} />
-        <Text style={styles.videoLink}>▶ Play Video</Text>
+        <View style={styles.playButton}>
+          <Text style={styles.playButtonText}>▶</Text>
+        </View>
       </TouchableOpacity>
     );
   };
 
   return (
     <View style={styles.container}>
-<View style={styles.daySelectorContainer}>
-  <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.daySelector}>
-    {weekDays.map((day) => {
-      const dayName = format(day, 'EEEE');
-      return (
-        <TouchableOpacity
-          key={dayName}
-          onPress={() => setSelectedDay(dayName)}
-          style={[
-            styles.dayButton,
-            selectedDay === dayName && styles.selectedDay
-          ]}
-        >
-          <Text style={styles.dayText}>{dayName.slice(0, 3)}</Text>
-          <Text style={styles.dateText}>{format(day, 'MMM d')}</Text>
-        </TouchableOpacity>
-      );
-    })}
-  </ScrollView>
-</View>
+      <View style={styles.header}>
+        <Text style={styles.headerTitle}>Training Plan</Text>
+      </View>
+      
+      <View style={styles.daySelectorContainer}>
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.daySelector}>
+          {weekDays.map((day) => {
+            const dayName = format(day, 'EEEE');
+            const isSelected = selectedDay === dayName;
+            return (
+              <TouchableOpacity
+                key={dayName}
+                onPress={() => setSelectedDay(dayName)}
+                style={[
+                  styles.dayButton,
+                  isSelected && styles.selectedDay
+                ]}
+              >
+                <Text style={[styles.dayText, isSelected && styles.selectedDayText]}>
+                  {format(day, 'EEE')}
+                </Text>
+                <Text style={[styles.dateText, isSelected && styles.selectedDateText]}>
+                  {format(day, 'd')}
+                </Text>
+              </TouchableOpacity>
+            );
+          })}
+        </ScrollView>
+      </View>
 
-      <ScrollView contentContainerStyle={{ paddingBottom: 40 }}>
-      {(workoutsByDay[selectedDay] && workoutsByDay[selectedDay].length > 0) ? (
-      workoutsByDay[selectedDay].map((item) => (
-    <View key={item.id} style={styles.card}>
-      <Text style={styles.title}>{item.title}</Text>
-      <TouchableOpacity onPress={() => {
-        setSelectedWorkoutId(item.id);
-        setDatePickerVisibility(true);
-      }}>
-        <Text style={styles.date}>{format(item.date, 'EEEE, MMM dd')}</Text>
-      </TouchableOpacity>
+      <ScrollView style={styles.content}>
+        {(workoutsByDay[selectedDay] && workoutsByDay[selectedDay].length > 0) ? (
+          workoutsByDay[selectedDay].map((item) => (
+            <View key={item.id} style={styles.workoutCard}>
+              <TouchableOpacity
+                style={styles.dateHeader}
+                onPress={() => {
+                  setSelectedWorkoutId(item.id);
+                  setDatePickerVisibility(true);
+                }}
+              >
+                <Text style={styles.workoutTitle}>{item.title}</Text>
+                <Text style={styles.dateLabel}>{format(item.date, 'MMM d')}</Text>
+              </TouchableOpacity>
 
-      {item.exercises.map((ex, index) => (
-        <View key={`${item.id}-${index}`} style={styles.exerciseCard}>
-          <Text style={styles.exerciseTitle}>{ex.name}</Text>
-          <Text style={styles.detail}>Sets: {ex.sets}  Reps: {ex.reps}  Weight: {ex.weight}</Text>
-          {renderVideoThumbnail(ex.video)}
-          <TextInput
-            style={styles.notes}
-            placeholder="Add notes..."
-            value={ex.notes}
-            onChangeText={(text) => handleNoteChange(index, text)}
-            multiline
-          />
-        </View>
-      ))}
-    </View>
-  ))
-) : (
-  <View style={styles.placeholderContainer}>
-    <Text style={styles.placeholderText}>No workouts scheduled for this day.</Text>
-  </View>
-)}
-</ScrollView>
+              {item.exercises.map((ex, index) => (
+                <View key={`${item.id}-${index}`} style={styles.exerciseCard}>
+                  <Text style={styles.exerciseName}>{ex.name}</Text>
+                  {(ex.sets > 0 || ex.reps > 0) && (
+                    <Text style={styles.exerciseDetails}>
+                      {ex.sets}x{ex.reps} {ex.weight && `@ ${ex.weight}`}
+                    </Text>
+                  )}
+                  {renderVideoThumbnail(ex.video)}
+                  <TextInput
+                    style={styles.notesInput}
+                    placeholder="Add notes..."
+                    value={ex.notes}
+                    onChangeText={(text) => handleNoteChange(index, text)}
+                    multiline
+                  />
+                </View>
+              ))}
+            </View>
+          ))
+        ) : (
+          <View style={styles.emptyState}>
+            <Text style={styles.emptyStateText}>Rest Day</Text>
+          </View>
+        )}
+      </ScrollView>
 
       {isDatePickerVisible && (
         <DateTimePicker
@@ -271,89 +291,169 @@ const TrainingPlan = () => {
   );
 };
 
-export default TrainingPlan;
-
 const styles = StyleSheet.create({
-  container: { flex: 1, paddingTop: 40, paddingHorizontal: 16, backgroundColor: '#f8f9fa' },
-  placeholderContainer: {
-    marginTop: 50,
-    alignItems: 'center',
-    justifyContent: 'center',
+  container: {
+    flex: 1,
+    backgroundColor: '#F5F6F7',
   },
-  placeholderText: {
-    fontSize: 18,
-    color: '#aaa',
-    fontStyle: 'italic',
-    textAlign: 'center',
+  header: {
+    paddingTop: 60,
+    paddingBottom: 20,
     paddingHorizontal: 20,
+    backgroundColor: '#fff',
+    borderBottomWidth: 1,
+    borderBottomColor: '#E1E4E8',
+  },
+  headerTitle: {
+    fontSize: 24,
+    fontWeight: '700',
+    color: '#1A1A1A',
   },
   daySelectorContainer: {
-    height: 90, // lock height
-    justifyContent: 'center',
-  },
-  daySelector: { marginBottom: 16 },
-  dayButton: {
+    backgroundColor: '#fff',
     paddingVertical: 10,
-    paddingHorizontal: 14,
-    backgroundColor: '#eaeaea',
-    borderRadius: 10,
-    marginRight: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: '#E1E4E8',
+  },
+  daySelector: {
+    paddingHorizontal: 15,
+  },
+  dayButton: {
+    width: 60,
+    height: 70,
+    justifyContent: 'center',
     alignItems: 'center',
+    marginHorizontal: 5,
+    borderRadius: 12,
+    backgroundColor: '#F5F6F7',
   },
   selectedDay: {
-    backgroundColor: '#007aff',
+    backgroundColor: '#4B3BE7',
   },
-  dayText: { fontSize: 16, fontWeight: '600', color: '#333' },
-  dateText: { fontSize: 14, color: '#666' },
-  card: {
+  dayText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#1A1A1A',
+  },
+  selectedDayText: {
+    color: '#fff',
+  },
+  dateText: {
+    fontSize: 20,
+    fontWeight: '700',
+    color: '#1A1A1A',
+    marginTop: 4,
+  },
+  selectedDateText: {
+    color: '#fff',
+  },
+  content: {
+    flex: 1,
+    padding: 15,
+  },
+  workoutCard: {
     backgroundColor: '#fff',
-    padding: 16,
-    borderRadius: 14,
-    marginBottom: 20,
-    borderLeftWidth: 5,
-    borderLeftColor: '#000', // logo color
+    borderRadius: 16,
+    marginBottom: 15,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
+    shadowOpacity: 0.05,
     shadowRadius: 4,
-    elevation: 4, // Android shadow
+    elevation: 2,
   },
-  cardHeaderAccent: {
-    height: 4,
-    width: '100%',
-    borderTopLeftRadius: 14,
-    borderTopRightRadius: 14,
+  dateHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: 15,
+    borderBottomWidth: 1,
+    borderBottomColor: '#E1E4E8',
+  },
+  workoutTitle: {
+    fontSize: 20,
+    fontWeight: '700',
+    color: '#1A1A1A',
+  },
+  dateLabel: {
+    fontSize: 14,
+    color: '#4B3BE7',
+    fontWeight: '600',
+  },
+  exerciseCard: {
+    padding: 15,
+    borderBottomWidth: 1,
+    borderBottomColor: '#E1E4E8',
+  },
+  exerciseName: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#1A1A1A',
     marginBottom: 8,
   },
-  title: {
-    fontSize: 40,
-    fontWeight: 'bold',
-    color: '#000', // consistent with the brand
-    marginBottom: 6,
+  exerciseDetails: {
+    fontSize: 14,
+    color: '#666',
+    marginBottom: 10,
   },
-  date: {
-    fontSize: 16,
-    color: '#007aff', // secondary color
-    marginBottom: 12,
-  },  
-  exerciseCard: {
-    borderTopWidth: 1,
-    borderTopColor: '#eee',
-    paddingTop: 10,
-    marginBottom: 12,
+  videoContainer: {
+    position: 'relative',
+    marginVertical: 10,
+    borderRadius: 12,
+    overflow: 'hidden',
   },
-  exerciseTitle: { fontSize: 18, fontWeight: '600', marginBottom: 4 },
-  detail: { fontSize: 16, color: '#333' },
-  notes: {
-    marginTop: 8,
-    borderWidth: 1,
-    borderColor: '#ddd',
+  thumbnail: {
+    width: '100%',
+    height: 180,
+    backgroundColor: '#F5F6F7',
+  },
+  playButton: {
+    position: 'absolute',
+    top: '50%',
+    left: '50%',
+    transform: [{ translateX: -25 }, { translateY: -25 }],
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  playButtonText: {
+    color: '#fff',
+    fontSize: 24,
+  },
+  notesInput: {
+    marginTop: 10,
+    padding: 12,
     borderRadius: 8,
-    padding: 8,
-    fontSize: 15,
-    backgroundColor: '#fafafa',
+    backgroundColor: '#F5F6F7',
+    fontSize: 14,
+    color: '#1A1A1A',
+    minHeight: 80,
   },
-  videoContainer: { marginTop: 10, alignItems: 'center' },
-  thumbnail: { width: '100%', height: 180, borderRadius: 8 },
-  videoLink: { marginTop: 6, color: '#007aff', fontWeight: '500' },
+  buttonLink: {
+    backgroundColor: '#4B3BE7',
+    padding: 12,
+    borderRadius: 8,
+    alignItems: 'center',
+    marginVertical: 10,
+  },
+  buttonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  emptyState: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 30,
+  },
+  emptyStateText: {
+    fontSize: 18,
+    color: '#666',
+    textAlign: 'center',
+  },
 });
+
+export default TrainingPlan;
