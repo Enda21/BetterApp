@@ -289,6 +289,8 @@ const TrainingPlan = () => {
           value={new Date()}
           mode="date"
           display="default"
+          minimumDate={startOfWeek(new Date(), { weekStartsOn: 1 })}
+          maximumDate={addDays(startOfWeek(new Date(), { weekStartsOn: 1 }), 6)}
           onChange={(event, selectedDate) => {
             if (event.type === 'set' && selectedDate) {
               handleDateConfirm(selectedDate);
