@@ -1,11 +1,12 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View, Text, StyleSheet, TouchableOpacity,
-  TextInput, Linking, Image, ScrollView
+  TextInput, Linking, Image, ScrollView, Alert, ActivityIndicator
 } from 'react-native';
 import DateTimePicker from '@react-native-community/datetimepicker';
-import { format, addDays, startOfWeek } from 'date-fns';
+import { format, addDays, startOfWeek, endOfWeek } from 'date-fns';
+import TrueCoachAPI, { TrueCoachWorkout } from '../services/TrueCoachAPI';
 
 const generateWeekDays = () => {
   const start = startOfWeek(new Date(), { weekStartsOn: 1 }); // Start on Monday
@@ -147,6 +148,78 @@ const TrainingPlan = () => {
   const [selectedWorkoutId, setSelectedWorkoutId] = useState(null);
   const [isDatePickerVisible, setDatePickerVisibility] = useState(false);
   const [workoutsByDay, setWorkoutsByDay] = useState(initialWorkouts);
+  const [trueCoachWorkouts, setTrueCoachWorkouts] = useState<TrueCoachWorkout[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [useTrueCoach, setUseTrueCoach] = useState(false);
+
+  useEffect(() => {
+    checkTrueCoachConnection();
+  }, []);
+
+  const checkTrueCoachConnection = async () => {
+    const apiKey = await TrueCoachAPI.getApiKey();
+    if (apiKey) {
+      setUseTrueCoach(true);
+      fetchTrueCoachWorkouts();
+    }
+  };
+
+  const fetchTrueCoachWorkouts = async () => {
+    setIsLoading(true);
+    try {
+      const startDate = format(startOfWeek(new Date(), { weekStartsOn: 1 }), 'yyyy-MM-dd');
+      const endDate = format(endOfWeek(new Date(), { weekStartsOn: 1 }), 'yyyy-MM-dd');
+      const workouts = await TrueCoachAPI.getWorkouts(startDate, endDate);
+      setTrueCoachWorkouts(workouts);
+      organizeTrueCoachWorkouts(workouts);
+    } catch (error) {
+      console.error('Failed to fetch TrueCoach workouts:', error);
+      Alert.alert('Error', 'Failed to fetch workouts from TrueCoach');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const organizeTrueCoachWorkouts = (workouts: TrueCoachWorkout[]) => {
+    const organized: any = {};
+    
+    workouts.forEach(workout => {
+      const day = format(new Date(workout.scheduled_for), 'EEEE');
+      if (!organized[day]) {
+        organized[day] = [];
+      }
+      
+      organized[day].push({
+        id: workout.id,
+        title: workout.title,
+        date: new Date(workout.scheduled_for),
+        exercises: workout.exercises.map(ex => ({
+          name: ex.name,
+          sets: ex.sets || 0,
+          reps: ex.reps || 0,
+          weight: ex.weight || '',
+          notes: ex.notes || '',
+          video: ex.video_url || ''
+        }))
+      });
+    });
+
+    setWorkoutsByDay(organized);
+  };
+
+  const setupTrueCoach = () => {
+    Alert.prompt(
+      'TrueCoach API Key',
+      'Enter your TrueCoach API key to sync workouts:',
+      async (apiKey) => {
+        if (apiKey) {
+          await TrueCoachAPI.setApiKey(apiKey);
+          setUseTrueCoach(true);
+          fetchTrueCoachWorkouts();
+        }
+      }
+    );
+  };
 
   const handleDateConfirm = (date) => {
     const currentWeekStart = startOfWeek(new Date(), { weekStartsOn: 1 });
@@ -183,10 +256,16 @@ const TrainingPlan = () => {
     setDatePickerVisibility(false);
   };
 
-  const handleNoteChange = (index, text) => {
+  const handleNoteChange = async (workoutIndex, exerciseIndex, text) => {
     const updated = { ...workoutsByDay };
-    updated[selectedDay][0].exercises[index].notes = text;
+    updated[selectedDay][workoutIndex].exercises[exerciseIndex].notes = text;
     setWorkoutsByDay(updated);
+
+    // Sync with TrueCoach if connected
+    if (useTrueCoach) {
+      const workoutId = updated[selectedDay][workoutIndex].id;
+      await TrueCoachAPI.updateWorkoutNotes(workoutId, text);
+    }
   };
 
   const renderVideoThumbnail = (url) => {
@@ -214,6 +293,20 @@ const TrainingPlan = () => {
     <View style={styles.container}>
       <View style={styles.header}>
         <Text style={styles.headerTitle}>Training Plan</Text>
+        <View style={styles.headerControls}>
+          {!useTrueCoach ? (
+            <TouchableOpacity onPress={setupTrueCoach} style={styles.syncButton}>
+              <Text style={styles.syncButtonText}>Connect TrueCoach</Text>
+            </TouchableOpacity>
+          ) : (
+            <View style={styles.syncStatus}>
+              <Text style={styles.syncStatusText}>✓ TrueCoach Connected</Text>
+              <TouchableOpacity onPress={fetchTrueCoachWorkouts} style={styles.refreshButton}>
+                <Text style={styles.refreshButtonText}>Refresh</Text>
+              </TouchableOpacity>
+            </View>
+          )}
+        </View>
       </View>
       
       <View style={styles.daySelectorContainer}>
@@ -243,22 +336,30 @@ const TrainingPlan = () => {
       </View>
 
       <ScrollView style={styles.content}>
-        {(workoutsByDay[selectedDay] && workoutsByDay[selectedDay].length > 0) ? (
-          workoutsByDay[selectedDay].map((item) => (
+        {isLoading ? (
+          <View style={styles.loadingContainer}>
+            <ActivityIndicator size="large" color="#4B3BE7" />
+            <Text style={styles.loadingText}>Syncing with TrueCoach...</Text>
+          </View>
+        ) : (workoutsByDay[selectedDay] && workoutsByDay[selectedDay].length > 0) ? (
+          workoutsByDay[selectedDay].map((item, workoutIndex) => (
             <View key={item.id} style={styles.workoutCard}>
               <TouchableOpacity
                 style={styles.dateHeader}
                 onPress={() => {
-                  setSelectedWorkoutId(item.id);
-                  setDatePickerVisibility(true);
+                  if (!useTrueCoach) {
+                    setSelectedWorkoutId(item.id);
+                    setDatePickerVisibility(true);
+                  }
                 }}
               >
                 <Text style={styles.workoutTitle}>{item.title}</Text>
                 <Text style={styles.dateLabel}>{format(item.date, 'MMM d')}</Text>
+                {useTrueCoach && <Text style={styles.trueCoachBadge}>TC</Text>}
               </TouchableOpacity>
 
-              {item.exercises.map((ex, index) => (
-                <View key={`${item.id}-${index}`} style={styles.exerciseCard}>
+              {item.exercises.map((ex, exerciseIndex) => (
+                <View key={`${item.id}-${exerciseIndex}`} style={styles.exerciseCard}>
                   <Text style={styles.exerciseName}>{ex.name}</Text>
                   {(ex.sets > 0 || ex.reps > 0) && (
                     <Text style={styles.exerciseDetails}>
@@ -270,7 +371,7 @@ const TrainingPlan = () => {
                     style={styles.notesInput}
                     placeholder="Add notes..."
                     value={ex.notes}
-                    onChangeText={(text) => handleNoteChange(index, text)}
+                    onChangeText={(text) => handleNoteChange(workoutIndex, exerciseIndex, text)}
                     multiline
                   />
                 </View>
@@ -279,7 +380,14 @@ const TrainingPlan = () => {
           ))
         ) : (
           <View style={styles.emptyState}>
-            <Text style={styles.emptyStateText}>Rest Day</Text>
+            <Text style={styles.emptyStateText}>
+              {useTrueCoach ? 'No workouts scheduled' : 'Rest Day'}
+            </Text>
+            {!useTrueCoach && (
+              <TouchableOpacity onPress={setupTrueCoach} style={styles.connectButton}>
+                <Text style={styles.connectButtonText}>Connect TrueCoach for Live Data</Text>
+              </TouchableOpacity>
+            )}
           </View>
         )}
       </ScrollView>
@@ -320,6 +428,74 @@ const styles = StyleSheet.create({
     fontSize: 24,
     fontWeight: '700',
     color: '#1A1A1A',
+  },
+  headerControls: {
+    marginTop: 10,
+  },
+  syncButton: {
+    backgroundColor: '#4B3BE7',
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 6,
+    alignSelf: 'flex-start',
+  },
+  syncButtonText: {
+    color: '#fff',
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  syncStatus: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
+  syncStatusText: {
+    color: '#10B981',
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  refreshButton: {
+    backgroundColor: '#F3F4F6',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 4,
+  },
+  refreshButtonText: {
+    color: '#4B3BE7',
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  trueCoachBadge: {
+    backgroundColor: '#10B981',
+    color: '#fff',
+    fontSize: 10,
+    fontWeight: '700',
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 4,
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 40,
+  },
+  loadingText: {
+    marginTop: 10,
+    fontSize: 16,
+    color: '#666',
+  },
+  connectButton: {
+    marginTop: 20,
+    backgroundColor: '#4B3BE7',
+    paddingHorizontal: 20,
+    paddingVertical: 12,
+    borderRadius: 8,
+  },
+  connectButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '600',
   },
   daySelectorContainer: {
     backgroundColor: '#fff',
