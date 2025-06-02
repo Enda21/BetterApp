@@ -1,10 +1,8 @@
-
 import React, { useState, useEffect } from 'react';
 import {
   View, Text, StyleSheet, TouchableOpacity,
-  TextInput, Linking, Image, ScrollView, Alert, ActivityIndicator
+  TextInput, Linking, Image, ScrollView, Alert, ActivityIndicator, Modal
 } from 'react-native';
-import DateTimePicker from '@react-native-community/datetimepicker';
 import { format, addDays, startOfWeek, endOfWeek } from 'date-fns';
 import TrueCoachAPI, { TrueCoachWorkout } from '../services/TrueCoachAPI';
 
@@ -182,13 +180,13 @@ const TrainingPlan = () => {
 
   const organizeTrueCoachWorkouts = (workouts: TrueCoachWorkout[]) => {
     const organized: any = {};
-    
+
     workouts.forEach(workout => {
       const day = format(new Date(workout.scheduled_for), 'EEEE');
       if (!organized[day]) {
         organized[day] = [];
       }
-      
+
       organized[day].push({
         id: workout.id,
         title: workout.title,
@@ -224,7 +222,7 @@ const TrainingPlan = () => {
   const handleDateConfirm = (date) => {
     const currentWeekStart = startOfWeek(new Date(), { weekStartsOn: 1 });
     const nextWeekStart = addDays(currentWeekStart, 7);
-    
+
     // Check if selected date is within current week
     if (date >= nextWeekStart) {
       alert('You can only move workouts within the current week');
@@ -308,7 +306,7 @@ const TrainingPlan = () => {
           )}
         </View>
       </View>
-      
+
       <View style={styles.daySelectorContainer}>
         <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.daySelector}>
           {weekDays.map((day) => {
@@ -392,21 +390,57 @@ const TrainingPlan = () => {
         )}
       </ScrollView>
 
-      {isDatePickerVisible && (
-        <DateTimePicker
-          value={new Date()}
-          mode="date"
-          display="calendar"
-          minimumDate={startOfWeek(new Date(), { weekStartsOn: 1 })}
-          maximumDate={addDays(startOfWeek(new Date(), { weekStartsOn: 1 }), 6)}
-          onChange={(event, selectedDate) => {
-            if (event.type === 'set' && selectedDate) {
-              handleDateConfirm(selectedDate);
-            }
-            setDatePickerVisibility(false);
-          }}
-        />
-      )}
+      {/* Custom Modal Date Picker for Current Week */}
+      <Modal
+        visible={isDatePickerVisible}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setDatePickerVisibility(false)}
+      >
+        <View style={{
+          flex: 1,
+          justifyContent: 'center',
+          alignItems: 'center',
+          backgroundColor: 'rgba(0,0,0,0.3)'
+        }}>
+          <View style={{
+            backgroundColor: '#fff',
+            borderRadius: 12,
+            padding: 20,
+            width: 300,
+            alignItems: 'center'
+          }}>
+            <Text style={{ fontWeight: 'bold', fontSize: 18, marginBottom: 10 }}>Select a Day</Text>
+            {weekDays.map((date) => (
+              <TouchableOpacity
+                key={date.toISOString()}
+                style={{
+                  padding: 12,
+                  marginVertical: 4,
+                  borderRadius: 8,
+                  backgroundColor: '#F5F6F7',
+                  width: '100%',
+                  alignItems: 'center'
+                }}
+                onPress={() => {
+                  handleDateConfirm(date);
+                  setDatePickerVisibility(false);
+                }}
+              >
+                <Text style={{ fontSize: 16 }}>
+                  {format(date, 'EEEE, MMM d')}
+                </Text>
+              </TouchableOpacity>
+            ))}
+            <TouchableOpacity
+              onPress={() => setDatePickerVisibility(false)}
+              style={{ marginTop: 10 }}
+            >
+              <Text style={{ color: '#4B3BE7', fontWeight: 'bold' }}>Cancel</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 };
