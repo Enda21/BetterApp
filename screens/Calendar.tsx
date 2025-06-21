@@ -37,7 +37,7 @@ const Calendar = () => {
 
   useEffect(() => {
     loadEvents();
-    addMensdayEvent(); // Add the Men's Day event from the announcement
+    addMensayEvent(); // Add the Men's Day event from the announcement
   }, []);
 
   const addMensayEvent = async () => {
