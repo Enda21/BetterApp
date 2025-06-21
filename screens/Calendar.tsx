@@ -6,9 +6,6 @@ import {
   StyleSheet,
   TouchableOpacity,
   ScrollView,
-  Alert,
-  Modal,
-  TextInput,
   Platform
 } from 'react-native';
 import { format, addDays, startOfMonth, endOfMonth, startOfWeek, endOfWeek, isSameDay, isSameMonth } from 'date-fns';
@@ -27,13 +24,6 @@ const Calendar = () => {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [events, setEvents] = useState<CalendarEvent[]>([]);
-  const [showAddEventModal, setShowAddEventModal] = useState(false);
-  const [newEvent, setNewEvent] = useState({
-    title: '',
-    time: '',
-    description: '',
-    location: ''
-  });
 
   useEffect(() => {
     loadEvents();
@@ -93,48 +83,7 @@ const Calendar = () => {
     }
   };
 
-  const addEvent = async () => {
-    if (!newEvent.title || !newEvent.time) {
-      Alert.alert('Error', 'Please fill in title and time');
-      return;
-    }
-
-    const event: CalendarEvent = {
-      id: Date.now().toString(),
-      title: newEvent.title,
-      date: selectedDate,
-      time: newEvent.time,
-      description: newEvent.description,
-      location: newEvent.location
-    };
-
-    const updatedEvents = [...events, event];
-    setEvents(updatedEvents);
-    await saveEvents(updatedEvents);
-    
-    setNewEvent({ title: '', time: '', description: '', location: '' });
-    setShowAddEventModal(false);
-    Alert.alert('Success', 'Event added successfully!');
-  };
-
-  const deleteEvent = async (eventId: string) => {
-    Alert.alert(
-      'Delete Event',
-      'Are you sure you want to delete this event?',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Delete',
-          style: 'destructive',
-          onPress: async () => {
-            const updatedEvents = events.filter(event => event.id !== eventId);
-            setEvents(updatedEvents);
-            await saveEvents(updatedEvents);
-          }
-        }
-      ]
-    );
-  };
+  
 
   const renderCalendarDays = () => {
     const start = startOfWeek(startOfMonth(currentDate));
@@ -226,12 +175,6 @@ const Calendar = () => {
           <Text style={styles.eventsTitle}>
             Events for {format(selectedDate, 'MMMM d, yyyy')}
           </Text>
-          <TouchableOpacity 
-            style={styles.addButton}
-            onPress={() => setShowAddEventModal(true)}
-          >
-            <Text style={styles.addButtonText}>+ Add</Text>
-          </TouchableOpacity>
         </View>
 
         <ScrollView style={styles.eventsList}>
@@ -239,9 +182,6 @@ const Calendar = () => {
             <View key={event.id} style={styles.eventCard}>
               <View style={styles.eventHeader}>
                 <Text style={styles.eventTitle}>{event.title}</Text>
-                <TouchableOpacity onPress={() => deleteEvent(event.id)}>
-                  <Text style={styles.deleteButton}>×</Text>
-                </TouchableOpacity>
               </View>
               <Text style={styles.eventTime}>{event.time}</Text>
               {event.location && (
@@ -258,64 +198,7 @@ const Calendar = () => {
         </ScrollView>
       </View>
 
-      {/* Add Event Modal */}
-      <Modal
-        visible={showAddEventModal}
-        transparent
-        animationType="slide"
-        onRequestClose={() => setShowAddEventModal(false)}
-      >
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>Add Event</Text>
-            
-            <TextInput
-              style={styles.input}
-              placeholder="Event Title"
-              value={newEvent.title}
-              onChangeText={(text) => setNewEvent({...newEvent, title: text})}
-            />
-            
-            <TextInput
-              style={styles.input}
-              placeholder="Time (e.g., 2:00 PM)"
-              value={newEvent.time}
-              onChangeText={(text) => setNewEvent({...newEvent, time: text})}
-            />
-            
-            <TextInput
-              style={styles.input}
-              placeholder="Location (optional)"
-              value={newEvent.location}
-              onChangeText={(text) => setNewEvent({...newEvent, location: text})}
-            />
-            
-            <TextInput
-              style={[styles.input, styles.textArea]}
-              placeholder="Description (optional)"
-              value={newEvent.description}
-              onChangeText={(text) => setNewEvent({...newEvent, description: text})}
-              multiline
-              numberOfLines={4}
-            />
-
-            <View style={styles.modalButtons}>
-              <TouchableOpacity 
-                style={styles.cancelButton}
-                onPress={() => setShowAddEventModal(false)}
-              >
-                <Text style={styles.cancelButtonText}>Cancel</Text>
-              </TouchableOpacity>
-              <TouchableOpacity 
-                style={styles.saveButton}
-                onPress={addEvent}
-              >
-                <Text style={styles.saveButtonText}>Save</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        </View>
-      </Modal>
+      
     </View>
   );
 };
