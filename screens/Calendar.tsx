@@ -27,14 +27,14 @@ const Calendar = () => {
 
   useEffect(() => {
     loadEvents();
-    addMensayEvent(); // Add the Men's Day event from the announcement
+    addMensDayEvent(); // Add the Men's Day event from the announcement
   }, []);
 
-  const addMensayEvent = async () => {
-    const mensayEvent: CalendarEvent = {
-      id: 'mensdaysu mmer2024',
+  const addMensDayEvent = async () => {
+    const mensDayEvent: CalendarEvent = {
+      id: 'mensdaysummer2024',
       title: "Men's Day SUMMER MEET UP",
-      date: new Date(2024, 5, 28), // June 28, 2024 (month is 0-indexed)
+      date: new Date(2025, 5, 28), // June 28, 2024 (month is 0-indexed)
       time: '9:15 AM',
       description: `📍 9:15 am — Meet in Lahinch Car Park near enough to the gym
 ⏰ 9:30 am - Group warm up and stretch
@@ -49,10 +49,10 @@ const Calendar = () => {
     };
 
     const existingEvents = await loadEvents();
-    const eventExists = existingEvents.some(event => event.id === mensayEvent.id);
+    const eventExists = existingEvents.some(event => event.id === mensDayEvent.id);
     
     if (!eventExists) {
-      const updatedEvents = [...existingEvents, mensayEvent];
+      const updatedEvents = [...existingEvents, mensDayEvent];
       setEvents(updatedEvents);
       await saveEvents(updatedEvents);
     }
