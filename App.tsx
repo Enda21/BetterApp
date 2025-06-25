@@ -11,6 +11,7 @@ import TrainingPlan from './screens/TrainingPlan';
 import Courses from './screens/Courses';
 import Calendar from './screens/Calendar';
 import ExternalLinks from './screens/ExternalLinks';
+import TouchPoint from './screens/TouchPoint';
 
 const Tab = createBottomTabNavigator();
 const Stack = createNativeStackNavigator();
@@ -36,6 +37,8 @@ export default function App() {
               return <Feather name="calendar" size={size} color={color} />;
             } else if (route.name === 'External Links') {
               return <Feather name="link" size={size} color={color} />;
+            } else if (route.name === 'Touch Point') {
+              return <MaterialCommunityIcons name="target" size={size} color={color} />;
             }
           },
           tabBarActiveTintColor: '#4B3BE7',
@@ -47,6 +50,7 @@ export default function App() {
         <Tab.Screen name="Training Plan" component={TrainingPlan} />
         <Tab.Screen name="Courses" component={Courses} />
         <Tab.Screen name="Calendar" component={Calendar} />
+        <Tab.Screen name="Touch Point" component={TouchPoint} />
         <Tab.Screen name="External Links" component={ExternalLinks} />
       </Tab.Navigator>
     </NavigationContainer>
