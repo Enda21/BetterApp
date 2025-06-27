@@ -170,20 +170,17 @@ const Calendar = () => {
         </View>
       </View>
 
-      {/* Selected Date Events */}
+      {/* All Events */}
       <View style={styles.eventsSection}>
         <View style={styles.eventsSectionHeader}>
-          <Text style={styles.eventsTitle}>
-            Events for {format(selectedDate, 'MMMM d, yyyy')}
-          </Text>
+          <Text style={styles.eventsTitle}>Upcoming Events</Text>
         </View>
 
         <ScrollView style={styles.eventsList}>
-          {getEventsForSelectedDate().map((event) => (
+          {events.map((event) => (
             <View key={event.id} style={styles.eventCard}>
-              <View style={styles.eventHeader}>
-                <Text style={styles.eventTitle}>{event.title}</Text>
-              </View>
+              <Text style={styles.eventDate}>{format(event.date, 'EEEE, MMMM d, yyyy')}</Text>
+              <Text style={styles.eventTitle}>{event.title}</Text>
               <Text style={styles.eventTime}>{event.time}</Text>
               {event.location && (
                 <Text style={styles.eventLocation}>📍 {event.location}</Text>
@@ -193,8 +190,8 @@ const Calendar = () => {
               )}
             </View>
           ))}
-          {getEventsForSelectedDate().length === 0 && (
-            <Text style={styles.noEvents}>No events for this date</Text>
+          {events.length === 0 && (
+            <Text style={styles.noEvents}>No upcoming events</Text>
           )}
         </ScrollView>
       </View>
@@ -355,11 +352,18 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'flex-start',
   },
+  eventDate: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#4B3BE7',
+    marginBottom: 8,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
   eventTitle: {
     fontSize: 18,
     fontWeight: '700',
     color: '#1A1A1A',
-    flex: 1,
     lineHeight: 24,
     marginBottom: 8,
   },
