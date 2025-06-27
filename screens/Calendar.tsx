@@ -32,20 +32,21 @@ const Calendar = () => {
 
   const addMensDayEvent = async () => {
     const mensDayEvent: CalendarEvent = {
-      id: 'mensdaysummer2024',
-      title: "Men's Day SUMMER MEET UP",
-      date: new Date(2025, 5, 28), // June 28, 2024 (month is 0-indexed)
+      id: 'mensdaysummer2025',
+      title: "Men's Day SUMMER MEET UP ANNOUNCEMENT — SATURDAY 28 JUNE 2025 🚨",
+      date: new Date(2025, 5, 28), // June 28, 2025 (month is 0-indexed)
       time: '9:15 AM',
-      description: `📍 9:15 am — Meet in Lahinch Car Park near enough to the gym
-⏰ 9:30 am - Group warm up and stretch
-💪 10 am - Team Building Training Session
-🏖️ 11 am - walk and a dip on Lahinch beach / shower and change
-🍞 12:30 - 2 pm - break bread together at Pot Duggans (5 min drive from Lahinch)
+      description: `We're hosting our next in-person Men's Day in Lahinch Co. Clare — and you're invited 👇
 
-👥 Bring a +1 (friend, brother, or someone who is interested in improving themselves)
-📍 Lahinch gym - Lahinch, County Clare
-🆓 Free for clients`,
-      location: 'Lahinch, County Clare'
+🕘 9:15 am — Meet in Lahinch Car Park near enough to the gym
+💪🏻 9:30 am - Group warm up and stretch
+🏋️‍♂️ 10 am - Team Building Training Session
+💦 11 am - walk and a dip on Lahinch beach / shower and change
+🍗 12:30 - 2 pm - break bread together at Pot Duggans (5 min drive from Lahinch)
+
+🤝 Bring a +1 (friend, brother, or someone who is interested in improving themselves)
+📍 Lahinch gym - Lahinch, County Clare`,
+      location: 'Lahinch gym - Lahinch, County Clare'
     };
 
     const existingEvents = await loadEvents();
@@ -338,14 +339,16 @@ const styles = StyleSheet.create({
   },
   eventCard: {
     backgroundColor: '#fff',
-    borderRadius: 12,
-    padding: 15,
-    marginBottom: 10,
+    borderRadius: 16,
+    padding: 20,
+    marginBottom: 15,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 4,
-    elevation: 2,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 4,
+    borderLeftWidth: 4,
+    borderLeftColor: '#4B3BE7',
   },
   eventHeader: {
     flexDirection: 'row',
@@ -353,10 +356,12 @@ const styles = StyleSheet.create({
     alignItems: 'flex-start',
   },
   eventTitle: {
-    fontSize: 16,
-    fontWeight: '600',
+    fontSize: 18,
+    fontWeight: '700',
     color: '#1A1A1A',
     flex: 1,
+    lineHeight: 24,
+    marginBottom: 8,
   },
   deleteButton: {
     fontSize: 20,
@@ -365,21 +370,25 @@ const styles = StyleSheet.create({
     paddingLeft: 10,
   },
   eventTime: {
-    fontSize: 14,
+    fontSize: 16,
     color: '#4B3BE7',
-    fontWeight: '600',
+    fontWeight: '700',
     marginTop: 5,
+    marginBottom: 8,
   },
   eventLocation: {
-    fontSize: 14,
-    color: '#666',
+    fontSize: 15,
+    color: '#10B981',
     marginTop: 5,
+    fontWeight: '600',
+    marginBottom: 10,
   },
   eventDescription: {
-    fontSize: 14,
-    color: '#666',
+    fontSize: 15,
+    color: '#374151',
     marginTop: 8,
-    lineHeight: 20,
+    lineHeight: 22,
+    fontWeight: '400',
   },
   noEvents: {
     textAlign: 'center',
