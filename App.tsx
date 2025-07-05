@@ -52,9 +52,7 @@ export default function App() {
         <Tab.Screen name="Home" component={Home} />
         <Tab.Screen name="Training Plan" component={TrainingPlan} />
         <Tab.Screen name="Courses" component={Courses} />
-        <Tab.Screen name="Calendar" component={Calendar} />
         <Tab.Screen name="Touch Point" component={TouchPoint} />
-        <Tab.Screen name="Podcasts" component={Podcasts} />
         <Tab.Screen name="External Links" component={ExternalLinks} />
       </Tab.Navigator>
     </NavigationContainer>
