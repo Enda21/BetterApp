@@ -9,13 +9,33 @@ import { Ionicons, MaterialCommunityIcons, Feather } from '@expo/vector-icons';
 import Home from './screens/Home';
 import TrainingPlan from './screens/TrainingPlan';
 import Courses from './screens/Courses';
-import Calendar from './screens/Calendar';
 import ExternalLinks from './screens/ExternalLinks';
-import TouchPoint from './screens/TouchPoint';
-import Podcasts from './screens/Podcasts';
+import WeeklyCheckIn from './screens/WeeklyCheckIn';
+import ReportIssue from './screens/ReportIssue'; 
+import Nutrition  from './screens/Nutrition';
+import PdfViewer from './screens/PdfViewer';
+
 
 const Tab = createBottomTabNavigator();
-const Stack = createNativeStackNavigator();
+const HomeStack = createNativeStackNavigator();
+const NutritionStack = createNativeStackNavigator();
+
+function HomeStackScreen() {
+  return (
+    <HomeStack.Navigator screenOptions={{ headerShown: false }}>
+      <HomeStack.Screen name="Home" component={Home} />
+      <HomeStack.Screen name="ReportIssue" component={ReportIssue} />
+    </HomeStack.Navigator>
+  );
+}
+function NutritionStackScreen() {
+  return (
+    <NutritionStack.Navigator screenOptions={{ headerShown: false }}>
+      <NutritionStack.Screen name="Nutrition" component={Nutrition} />
+      <NutritionStack.Screen name="PdfViewer" component={PdfViewer} />
+    </NutritionStack.Navigator>
+  );
+}
 
 export default function App() {
   return (
@@ -34,14 +54,13 @@ export default function App() {
               return <MaterialCommunityIcons name="dumbbell" size={size} color={color} />;
             } else if (route.name === 'Courses') {
               return <Ionicons name="book-outline" size={size} color={color} />;
-            } else if (route.name === 'Calendar') {
-              return <Feather name="calendar" size={size} color={color} />;
             } else if (route.name === 'External Links') {
               return <Feather name="link" size={size} color={color} />;
-            } else if (route.name === 'Touch Point') {
+            } else if (route.name === 'Check In') {
               return <MaterialCommunityIcons name="target" size={size} color={color} />;
-            } else if (route.name === 'Podcasts') {
-              return <Ionicons name="headset-outline" size={size} color={color} />;
+            }
+            else if (route.name === 'Nutrition') {
+              return <MaterialCommunityIcons name="apple" size={size} color={color} />; 
             }
           },
           tabBarActiveTintColor: '#4B3BE7',
@@ -49,10 +68,11 @@ export default function App() {
           headerShown: false,
         })}
       >
-        <Tab.Screen name="Home" component={Home} />
+        <Tab.Screen name="Home" component={HomeStackScreen} />
         <Tab.Screen name="Training Plan" component={TrainingPlan} />
         <Tab.Screen name="Courses" component={Courses} />
-        <Tab.Screen name="Touch Point" component={TouchPoint} />
+        <Tab.Screen name="Check In" component={WeeklyCheckIn} />
+        <Tab.Screen name="Nutrition" component={NutritionStackScreen} />
         <Tab.Screen name="External Links" component={ExternalLinks} />
       </Tab.Navigator>
     </NavigationContainer>

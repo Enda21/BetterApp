@@ -31,6 +31,9 @@
     },
     "updates": {
       "url": "https://u.expo.dev/5b41f115-f574-4426-ac48-bab34012dd86"
-    }
+    },
+    "plugins": [
+      "expo-mail-composer"
+    ]
   }
 }
