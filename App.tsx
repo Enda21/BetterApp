@@ -13,7 +13,6 @@ import ExternalLinks from './screens/ExternalLinks';
 import WeeklyCheckIn from './screens/WeeklyCheckIn';
 import ReportIssue from './screens/ReportIssue'; 
 import Nutrition  from './screens/Nutrition';
-import PdfViewer from './screens/PdfViewer';
 
 
 const Tab = createBottomTabNavigator();
@@ -26,14 +25,6 @@ function HomeStackScreen() {
       <HomeStack.Screen name="Home" component={Home} />
       <HomeStack.Screen name="ReportIssue" component={ReportIssue} />
     </HomeStack.Navigator>
-  );
-}
-function NutritionStackScreen() {
-  return (
-    <NutritionStack.Navigator screenOptions={{ headerShown: false }}>
-      <NutritionStack.Screen name="Nutrition" component={Nutrition} />
-      <NutritionStack.Screen name="PdfViewer" component={PdfViewer} />
-    </NutritionStack.Navigator>
   );
 }
 
@@ -72,7 +63,7 @@ export default function App() {
         <Tab.Screen name="Training Plan" component={TrainingPlan} />
         <Tab.Screen name="Courses" component={Courses} />
         <Tab.Screen name="Check In" component={WeeklyCheckIn} />
-        <Tab.Screen name="Nutrition" component={NutritionStackScreen} />
+        <Tab.Screen name="Nutrition" component={Nutrition} />
         <Tab.Screen name="External Links" component={ExternalLinks} />
       </Tab.Navigator>
     </NavigationContainer>

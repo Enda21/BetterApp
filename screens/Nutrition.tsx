@@ -1,4 +1,5 @@
 import React from 'react';
+import * as Sharing from 'expo-sharing';
 import {
   Text,
   StyleSheet,
@@ -8,14 +9,6 @@ import {
 } from 'react-native';
 import * as FileSystem from 'expo-file-system';
 import { Asset } from 'expo-asset';
-
-import { useNavigation } from '@react-navigation/native';
-import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { Linking } from 'react-native';
-
-type RootStackParamList = {
-  PdfViewer: { uri: string };
-};
 
 const mealPlans = [
   {
@@ -42,40 +35,48 @@ const mealPlans = [
     uri: FileSystem.documentDirectory + 'The_BABM_Travel_Bible.pdf',
     remoteAsset: require('../assets/The_BABM_Travel_Bible.pdf'),
   },
+  {
+    title: 'Evening Snacking The Slient Saboteur',
+    filename: 'Evening_Snacking_The_Silent_Saboteur.pdf',
+    uri: FileSystem.documentDirectory + 'Evening_Snacking_The_Silent_Saboteur.pdf',
+    remoteAsset: require('../assets/Evening_Snacking_The_Silent_Saboteur.pdf'),
+  }
 ];
 
 const Nutrition = () => {
-  const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
+  const handleOpenPDF = async (item: typeof mealPlans[0]) => {
+    const fileUri = item.uri;
 
- const handleOpenPDF = async (item: typeof mealPlans[0]) => {
-  const fileUri = item.uri;
-
-  // Check if the file already exists
-  let fileInfo = await FileSystem.getInfoAsync(fileUri);
-  if (!fileInfo.exists) {
-    try {
-      const asset = Asset.fromModule(item.remoteAsset);
-      await asset.downloadAsync();
-      if (!asset.localUri) {
-        return Alert.alert('Error', 'Could not get local URI for the PDF asset.');
-      }
-      await FileSystem.copyAsync({
-        from: asset.localUri,
-        to: fileUri,
-      });
-    } catch (error) {
-      return Alert.alert('Error', 'Failed to download the PDF.');
-    }
-    // Re-check after download
-    fileInfo = await FileSystem.getInfoAsync(fileUri);
+    // Check if the file already exists
+    let fileInfo = await FileSystem.getInfoAsync(fileUri);
     if (!fileInfo.exists) {
-      return Alert.alert('Error', 'PDF file not found after download.');
+      try {
+        const asset = Asset.fromModule(item.remoteAsset);
+        await asset.downloadAsync();
+        if (!asset.localUri) {
+          return Alert.alert('Error', 'Could not get local URI for the PDF asset.');
+        }
+        await FileSystem.copyAsync({
+          from: asset.localUri,
+          to: fileUri,
+        });
+      } catch (error) {
+        return Alert.alert('Error', 'Failed to download the PDF.');
+      }
+      // Re-check after download
+      fileInfo = await FileSystem.getInfoAsync(fileUri);
+      if (!fileInfo.exists) {
+        return Alert.alert('Error', 'PDF file not found after download.');
+      }
     }
-  }
 
-  // Attempt to open the PDF
-  navigation.navigate('PdfViewer', { uri: fileUri });
-};
+    // Use expo-sharing to open the PDF with an external app
+    try {
+      await Sharing.shareAsync(fileUri);
+    } catch (error) {
+      Alert.alert('Error', `Could not share/open the PDF. URI: ${fileUri}\n${error}`);
+    }
+  };
 
   return (
     <ScrollView style={styles.container}>
@@ -119,4 +120,5 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
   },
 });
+
 export default Nutrition;
