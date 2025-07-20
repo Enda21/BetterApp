@@ -11,7 +11,27 @@ const generateWeekDays = () => {
   return Array.from({ length: 7 }, (_, i) => addDays(start, i));
 };
 
-const initialWorkouts = {
+type Exercise = {
+  name: string;
+  sets?: number;
+  reps?: number;
+  weight?: string;
+  notes?: string;
+  video?: string;
+};
+
+type Workout = {
+  id: string;
+  title: string;
+  date: Date;
+  exercises: Exercise[];
+};
+
+type WorkoutsByDay = {
+  [day: string]: Workout[];
+};
+
+const initialWorkouts: WorkoutsByDay = {
   Monday: [
     {
       id: '1',
@@ -142,19 +162,54 @@ const initialWorkouts = {
 
 const TrainingPlan = () => {
   const weekDays = generateWeekDays();
-  const [selectedDay, setSelectedDay] = useState(format(new Date(), 'EEEE'));
-  const [selectedWorkoutId, setSelectedWorkoutId] = useState(null);
-  const [isDatePickerVisible, setDatePickerVisibility] = useState(false);
-  const [workoutsByDay, setWorkoutsByDay] = useState(initialWorkouts);
+  const [selectedDay, setSelectedDay] = useState<string>(format(new Date(), 'EEEE'));
+  const [selectedWorkoutId, setSelectedWorkoutId] = useState<string | null>(null);
+  const [isDatePickerVisible, setDatePickerVisibility] = useState<boolean>(false);
+  const [workoutsByDay, setWorkoutsByDay] = useState<WorkoutsByDay>(initialWorkouts);
   const [trueCoachWorkouts, setTrueCoachWorkouts] = useState<TrueCoachWorkout[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [useTrueCoach, setUseTrueCoach] = useState(false);
+  // Track completion state for each exercise by workoutId and exerciseIndex
+  type CompletionState = 0 | 1 | 2;
+  type ExerciseCompletion = { [workoutId: string]: { [exerciseIndex: number]: CompletionState } };
+  const [exerciseCompletion, setExerciseCompletion] = useState<ExerciseCompletion>({});
+
+  // 0 = grey tick, 1 = green tick, 2 = red X
+  const getCompletionIcon = (state: CompletionState): string => {
+    if (state === 1) return '✅';
+    if (state === 2) return '❌';
+    return '✔️';
+  };
+
+  const getCompletionColor = (state: CompletionState): string => {
+    if (state === 1) return '#10B981'; // green
+    if (state === 2) return '#EF4444'; // red
+    return '#A1A1AA'; // grey
+  };
+
+  const handleToggleExerciseComplete = (workoutId: string, exerciseIndex: number): void => {
+    setExerciseCompletion(prev => {
+      const workoutState = prev[workoutId] || {};
+      const current = workoutState[exerciseIndex] || 0;
+      let next: CompletionState;
+      if (current === 0) next = 1;
+      else if (current === 1) next = 2;
+      else next = 1;
+      return {
+        ...prev,
+        [workoutId]: {
+          ...workoutState,
+          [exerciseIndex]: next,
+        },
+      };
+    });
+  };
 
   useEffect(() => {
     checkTrueCoachConnection();
   }, []);
 
-  const checkTrueCoachConnection = async () => {
+  const checkTrueCoachConnection = async (): Promise<void> => {
     const apiKey = await TrueCoachAPI.getApiKey();
     if (apiKey) {
       setUseTrueCoach(true);
@@ -162,7 +217,7 @@ const TrainingPlan = () => {
     }
   };
 
-  const fetchTrueCoachWorkouts = async () => {
+  const fetchTrueCoachWorkouts = async (): Promise<void> => {
     setIsLoading(true);
     try {
       const startDate = format(startOfWeek(new Date(), { weekStartsOn: 1 }), 'yyyy-MM-dd');
@@ -178,8 +233,8 @@ const TrainingPlan = () => {
     }
   };
 
-  const organizeTrueCoachWorkouts = (workouts: TrueCoachWorkout[]) => {
-    const organized: any = {};
+  const organizeTrueCoachWorkouts = (workouts: TrueCoachWorkout[]): void => {
+    const organized: WorkoutsByDay = {};
 
     workouts.forEach(workout => {
       const day = format(new Date(workout.scheduled_for), 'EEEE');
@@ -205,7 +260,7 @@ const TrainingPlan = () => {
     setWorkoutsByDay(organized);
   };
 
-  const setupTrueCoach = () => {
+  const setupTrueCoach = (): void => {
     Alert.prompt(
       'TrueCoach API Key',
       'Enter your TrueCoach API key to sync workouts:',
@@ -219,7 +274,7 @@ const TrainingPlan = () => {
     );
   };
 
-  const handleDateConfirm = (date) => {
+  const handleDateConfirm = (date: Date): void => {
     const currentWeekStart = startOfWeek(new Date(), { weekStartsOn: 1 });
     const nextWeekStart = addDays(currentWeekStart, 7);
 
@@ -234,11 +289,11 @@ const TrainingPlan = () => {
     const updated = { ...workoutsByDay };
 
     const currentDayWorkouts = updated[selectedDay] || [];
-    const workoutToMove = currentDayWorkouts.find((w) => w.id === selectedWorkoutId);
+    const workoutToMove = currentDayWorkouts.find((w: Workout) => w.id === selectedWorkoutId);
 
     if (!workoutToMove) return;
 
-    updated[selectedDay] = currentDayWorkouts.filter((w) => w.id !== selectedWorkoutId);
+    updated[selectedDay] = currentDayWorkouts.filter((w: Workout) => w.id !== selectedWorkoutId);
 
     const updatedWorkout = {
       ...workoutToMove,
@@ -254,7 +309,7 @@ const TrainingPlan = () => {
     setDatePickerVisibility(false);
   };
 
-  const handleNoteChange = async (workoutIndex, exerciseIndex, text) => {
+  const handleNoteChange = async (workoutIndex: number, exerciseIndex: number, text: string): Promise<void> => {
     const updated = { ...workoutsByDay };
     updated[selectedDay][workoutIndex].exercises[exerciseIndex].notes = text;
     setWorkoutsByDay(updated);
@@ -266,7 +321,7 @@ const TrainingPlan = () => {
     }
   };
 
-  const renderVideoThumbnail = (url) => {
+  const renderVideoThumbnail = (url: string): React.ReactElement | null => {
     if (!url) return null;
     if (url.includes('typeform.com')) {
       return (
@@ -340,31 +395,43 @@ const TrainingPlan = () => {
             <Text style={styles.loadingText}>Syncing with TrueCoach...</Text>
           </View>
         ) : (workoutsByDay[selectedDay] && workoutsByDay[selectedDay].length > 0) ? (
-          workoutsByDay[selectedDay].map((item, workoutIndex) => (
+          workoutsByDay[selectedDay].map((item: Workout, workoutIndex: number) => (
             <View key={item.id} style={styles.workoutCard}>
-              <TouchableOpacity
-                style={styles.dateHeader}
-                onPress={() => {
-                  if (!useTrueCoach) {
-                    setSelectedWorkoutId(item.id);
-                    setDatePickerVisibility(true);
-                  }
-                }}
-              >
-                <Text style={styles.workoutTitle}>{item.title}</Text>
-                <Text style={styles.dateLabel}>{format(item.date, 'MMM d')}</Text>
-                {useTrueCoach && <Text style={styles.trueCoachBadge}>TC</Text>}
-              </TouchableOpacity>
+              <View style={styles.dateHeader}>
+                <TouchableOpacity
+                  style={styles.dateHeaderTouchable}
+                  onPress={() => {
+                    if (!useTrueCoach) {
+                      setSelectedWorkoutId(item.id);
+                      setDatePickerVisibility(true);
+                    }
+                  }}
+                >
+                  <Text style={styles.workoutTitle}>{item.title}</Text>
+                  <Text style={styles.dateLabel}>{format(item.date, 'MMM d')}</Text>
+                  {useTrueCoach && <Text style={styles.trueCoachBadge}>TC</Text>}
+                </TouchableOpacity>
+              </View>
 
               {item.exercises.map((ex, exerciseIndex) => (
                 <View key={`${item.id}-${exerciseIndex}`} style={styles.exerciseCard}>
-                  <Text style={styles.exerciseName}>{ex.name}</Text>
-                  {(ex.sets > 0 || ex.reps > 0) && (
-                    <Text style={styles.exerciseDetails}>
-                      {ex.sets}x{ex.reps} {ex.weight && `@ ${ex.weight}`}
-                    </Text>
-                  )}
-                  {renderVideoThumbnail(ex.video)}
+                  <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+                    <View style={{ flex: 1 }}>
+                      <Text style={styles.exerciseName}>{ex.name}</Text>
+                      {((ex.sets ?? 0) > 0 || (ex.reps ?? 0) > 0) && (
+                        <Text style={styles.exerciseDetails}>
+                          {(ex.sets ?? 0)}x{(ex.reps ?? 0)} {ex.weight && `@ ${ex.weight}`}
+                        </Text>
+                      )}
+                    </View>
+                    <TouchableOpacity
+                      style={[styles.completeButton, { backgroundColor: getCompletionColor((exerciseCompletion[item.id]?.[exerciseIndex]) ?? 0) }]}
+                      onPress={() => handleToggleExerciseComplete(item.id, exerciseIndex)}
+                    >
+                      <Text style={styles.completeIcon}>{getCompletionIcon((exerciseCompletion[item.id]?.[exerciseIndex]) ?? 0)}</Text>
+                    </TouchableOpacity>
+                  </View>
+                  {renderVideoThumbnail(ex.video ?? '')}
                   <TextInput
                     style={styles.notesInput}
                     placeholder="Add notes..."
@@ -590,6 +657,26 @@ const styles = StyleSheet.create({
     padding: 15,
     borderBottomWidth: 1,
     borderBottomColor: '#E1E4E8',
+    position: 'relative',
+  },
+  dateHeaderTouchable: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
+    gap: 10,
+  },
+  completeButton: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginLeft: 10,
+  },
+  completeIcon: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#fff',
   },
   workoutTitle: {
     fontSize: 20,
