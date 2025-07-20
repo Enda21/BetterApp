@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import Feather from 'react-native-vector-icons/Feather';
 import {
   View, Text, StyleSheet, TouchableOpacity,
   TextInput, Linking, Image, ScrollView, Alert, ActivityIndicator, Modal
@@ -173,12 +174,51 @@ const TrainingPlan = () => {
   type CompletionState = 0 | 1 | 2;
   type ExerciseCompletion = { [workoutId: string]: { [exerciseIndex: number]: CompletionState } };
   const [exerciseCompletion, setExerciseCompletion] = useState<ExerciseCompletion>({});
+  // State for celebratory pop-up
+  const [showCelebration, setShowCelebration] = useState(false);
+  // State for Exercise History Modal
+  const [showHistoryModal, setShowHistoryModal] = useState(false);
+  const [historyExercise, setHistoryExercise] = useState<Exercise | null>(null);
+  const [historyData, setHistoryData] = useState<any[]>([]);
+
+  // Mock function to get exercise history
+  const getMockExerciseHistory = (exercise: Exercise) => {
+    // Return 3 mock history entries
+    return [
+      {
+        date: '2025-07-13',
+        sets: exercise.sets ?? 3,
+        reps: exercise.reps ?? 10,
+        weight: exercise.weight ?? '70kg',
+        notes: 'Felt strong, increased weight.',
+      },
+      {
+        date: '2025-07-06',
+        sets: exercise.sets ?? 3,
+        reps: exercise.reps ?? 10,
+        weight: exercise.weight ?? '68kg',
+        notes: 'Good form, but tired.',
+      },
+      {
+        date: '2025-06-29',
+        sets: exercise.sets ?? 3,
+        reps: exercise.reps ?? 10,
+        weight: exercise.weight ?? '65kg',
+        notes: 'First time doing this exercise.',
+      },
+    ];
+  };
 
   // 0 = grey tick, 1 = green tick, 2 = red X
-  const getCompletionIcon = (state: CompletionState): string => {
-    if (state === 1) return '✅';
-    if (state === 2) return '❌';
-    return '✔️';
+  const getCompletionIcon = (state: CompletionState): React.ReactElement => {
+    if (state === 1) {
+      return <Feather name="check-circle" size={24} color="#fff" />;
+    }
+    if (state === 2) {
+      return <Feather name="x-circle" size={24} color="#fff" />;
+    }
+    // Default: check-circle (grey)
+    return <Feather name="check-circle" size={30}/>;
   };
 
   const getCompletionColor = (state: CompletionState): string => {
@@ -188,22 +228,37 @@ const TrainingPlan = () => {
   };
 
   const handleToggleExerciseComplete = (workoutId: string, exerciseIndex: number): void => {
+    // Determine next state for the exercise
+    const workoutState = exerciseCompletion[workoutId] || {};
+    const currentState = workoutState[exerciseIndex] || 0;
+    let nextState: CompletionState;
+    if (currentState === 0) nextState = 1;
+    else if (currentState === 1) nextState = 2;
+    else nextState = 1;
     setExerciseCompletion(prev => {
-      const workoutState = prev[workoutId] || {};
-      const current = workoutState[exerciseIndex] || 0;
-      let next: CompletionState;
-      if (current === 0) next = 1;
-      else if (current === 1) next = 2;
-      else next = 1;
+      const workoutStatePrev = prev[workoutId] || {};
       return {
         ...prev,
         [workoutId]: {
-          ...workoutState,
-          [exerciseIndex]: next,
+          ...workoutStatePrev,
+          [exerciseIndex]: nextState,
         },
       };
     });
   };
+
+  // useEffect to check for all complete after exerciseCompletion changes
+  useEffect(() => {
+    // Find the selected workout for the selected day
+    const workouts = workoutsByDay[selectedDay] || [];
+    workouts.forEach((workout) => {
+      const stateObj = exerciseCompletion[workout.id] || {};
+      const allComplete = workout.exercises.length > 0 && workout.exercises.every((_, idx) => stateObj[idx] === 1);
+      if (allComplete) {
+        setShowCelebration(true);
+      }
+    });
+  }, [exerciseCompletion, workoutsByDay, selectedDay]);
 
   useEffect(() => {
     checkTrueCoachConnection();
@@ -344,6 +399,66 @@ const TrainingPlan = () => {
 
   return (
     <View style={styles.container}>
+      {/* Celebration Modal */}
+      <Modal
+        visible={showCelebration}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setShowCelebration(false)}
+      >
+        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: 'rgba(0,0,0,0.4)' }}>
+          <View style={{ backgroundColor: '#fff', borderRadius: 16, padding: 30, alignItems: 'center', width: 300 }}>
+            <Text style={{ fontSize: 24, fontWeight: 'bold', color: '#10B981', marginBottom: 16 }}>Great job!</Text>
+            <Text style={{ fontSize: 18, color: '#333', marginBottom: 24, textAlign: 'center' }}>
+              You completed your workout!
+            </Text>
+            <TouchableOpacity
+              style={{ backgroundColor: '#4B3BE7', paddingHorizontal: 24, paddingVertical: 12, borderRadius: 8 }}
+              onPress={() => setShowCelebration(false)}
+            >
+              <Text style={{ color: '#fff', fontWeight: 'bold', fontSize: 16 }}>Close</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+      {/* Exercise History Modal */}
+      <Modal
+        visible={showHistoryModal}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setShowHistoryModal(false)}
+      >
+        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: 'rgba(0,0,0,0.4)' }}>
+          <View style={{ backgroundColor: '#fff', borderRadius: 16, padding: 30, alignItems: 'center', width: 320 }}>
+            <Text style={{ fontSize: 22, fontWeight: 'bold', color: '#4B3BE7', marginBottom: 12 }}>Exercise History</Text>
+            {historyExercise && (
+              <View style={{ marginBottom: 16, alignItems: 'center' }}>
+                <Text style={{ fontSize: 18, fontWeight: '600', color: '#1A1A1A' }}>{historyExercise.name}</Text>
+                {(historyExercise.sets ?? 0) > 0 || (historyExercise.reps ?? 0) > 0 ? (
+                  <Text style={{ fontSize: 15, color: '#666' }}>
+                    {(historyExercise.sets ?? 0)}x{(historyExercise.reps ?? 0)} {historyExercise.weight && `@ ${historyExercise.weight}`}
+                  </Text>
+                ) : null}
+              </View>
+            )}
+            <ScrollView style={{ maxHeight: 220, width: '100%' }}>
+              {historyData.map((entry, idx) => (
+                <View key={idx} style={{ marginBottom: 18, padding: 12, backgroundColor: '#F5F6F7', borderRadius: 8 }}>
+                  <Text style={{ fontWeight: 'bold', color: '#4B3BE7' }}>Date: {entry.date}</Text>
+                  <Text>Sets: {entry.sets} | Reps: {entry.reps} {entry.weight && `| Weight: ${entry.weight}`}</Text>
+                  <Text style={{ color: '#333', marginTop: 4 }}>Comments: {entry.notes}</Text>
+                </View>
+              ))}
+            </ScrollView>
+            <TouchableOpacity
+              style={{ backgroundColor: '#4B3BE7', paddingHorizontal: 24, paddingVertical: 12, borderRadius: 8, marginTop: 10 }}
+              onPress={() => setShowHistoryModal(false)}
+            >
+              <Text style={{ color: '#fff', fontWeight: 'bold', fontSize: 16 }}>Close</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
       <View style={styles.header}>
         <Text style={styles.headerTitle}>Training Plan</Text>
         <View style={styles.headerControls}>
@@ -428,9 +543,20 @@ const TrainingPlan = () => {
                       style={[styles.completeButton, { backgroundColor: getCompletionColor((exerciseCompletion[item.id]?.[exerciseIndex]) ?? 0) }]}
                       onPress={() => handleToggleExerciseComplete(item.id, exerciseIndex)}
                     >
-                      <Text style={styles.completeIcon}>{getCompletionIcon((exerciseCompletion[item.id]?.[exerciseIndex]) ?? 0)}</Text>
+                      {getCompletionIcon((exerciseCompletion[item.id]?.[exerciseIndex]) ?? 0)}
                     </TouchableOpacity>
                   </View>
+                  {/* Exercise History Button */}
+                  <TouchableOpacity
+                    style={styles.historyButton}
+                    onPress={() => {
+                      setHistoryExercise(ex);
+                      setHistoryData(getMockExerciseHistory(ex));
+                      setShowHistoryModal(true);
+                    }}
+                  >
+                    <Text style={styles.historyButtonText}>Exercise History</Text>
+                  </TouchableOpacity>
                   {renderVideoThumbnail(ex.video ?? '')}
                   <TextInput
                     style={styles.notesInput}
@@ -762,6 +888,19 @@ const styles = StyleSheet.create({
     fontSize: 18,
     color: '#666',
     textAlign: 'center',
+  },
+  historyButton: {
+    backgroundColor: '#E1E4E8',
+    padding: 8,
+    borderRadius: 8,
+    alignItems: 'center',
+    marginVertical: 8,
+    alignSelf: 'flex-start',
+  },
+  historyButtonText: {
+    color: '#4B3BE7',
+    fontWeight: '600',
+    fontSize: 14,
   },
 });
 
