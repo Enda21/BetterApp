@@ -1,139 +1,72 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { 
   View, 
   Text, 
   StyleSheet, 
   TouchableOpacity, 
   ScrollView,
+  Linking,
   Dimensions 
 } from 'react-native';
-import { WebView } from 'react-native-webview';
 
 const { width } = Dimensions.get('window');
 
-interface Course {
-  id: string;
-  title: string;
-  videoId: string;
-  description?: string;
-}
-
-const courses: Course[] = [
-  {
-    id: '1',
-    title: 'Come Back From Holidays Looking & Feeling Better',
-    videoId: 'k5EhZX1kMzQ',
-    description: 'Without Sacrificing Drinks Or Foods'
+const SUB_COURSES = [
+  { 
+    id: '1.1', 
+    title: 'Rules Of Engagement: How We Communicate',
+    url: 'https://www.skool.com/be-a-a-better-man-5157/classroom/f1987603?md=5b49cbbee3f3443a9ff2a83c4ef30d7d'
   },
-  {
-    id: '2',
-    title: 'Peak Performance Roundtable With 3 Leaders',
-    videoId: '',
+  { 
+    id: '1.2', 
+    title: 'How To Look At Your Training',
+    url: 'https://www.skool.com/be-a-a-better-man-5157/classroom/f1987603?md=89d09a3ef3b746afb794fa073dbcb0e0'
   },
-  {
-    id: '3',
-    title: '"Stuck In The Man Box"',
-    videoId: '',
+  { 
+    id: '1.3', 
+    title: 'How To View And Log Your Nutrition',
+    url: 'https://www.skool.com/be-a-a-better-man-5157/classroom/f1987603?md=0ccf6347631645dd807355aec93e2dd0'
   },
-  {
-    id: '4',
-    title: 'Goals Audit For 2024: Commitment Season',
-    videoId: '',
+  { 
+    id: '1.4', 
+    title: 'What To Expect Inside The First 30 Days',
+    url: 'https://www.skool.com/be-a-a-better-man-5157/classroom/f1987603?md=6ec1abffaaa945ffbd2dd6e119708f16'
   },
-  {
-    id: '5',
-    title: 'Better Man Awards And Yearly Review (2024)',
-    videoId: '',
+  { 
+    id: '1.5', 
+    title: 'How to Take Progress Photos',
+    url: 'https://www.skool.com/be-a-a-better-man-5157/classroom/f1987603?md=177714bb230d4d7ca2b4f7e7786979e1'
   },
-  {
-    id: '6',
-    title: 'Goal Setting For 2025',
-    videoId: '',
-  },
-  {
-    id: '7',
-    title: '48hr Hols Recovery Protocol To Accelerate',
-    videoId: '',
+  { 
+    id: '1.6', 
+    title: 'Truecoach Tutorial',
+    url: 'https://www.skool.com/be-a-a-better-man-5157/classroom/f1987603?md=d382e85abc1643f49c5009d3bc767487'
   },
 ];
 
-const Courses = () => {
-  const [selectedCourse, setSelectedCourse] = useState<Course>(courses[0]);
 
-  const getVideoEmbedUrl = (videoId: string) => {
-    return `https://www.youtube.com/embed/${videoId}?enablejsapi=1&origin=*`;
+const Courses = () => {
+  const handleSubCoursePress = (url: string) => {
+    Linking.openURL(url);
   };
 
   return (
     <View style={styles.container}>
-      {/* Header */}
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>Monthly Masterclass</Text>
-        <View style={styles.progressContainer}>
-          <Text style={styles.progressText}>0%</Text>
-          <View style={styles.progressBar}>
-            <View style={styles.progressFill} />
-          </View>
-        </View>
+        <Text style={styles.headerTitle}>New Member 4 Week Launch Pad: Start</Text>
       </View>
-
       <View style={styles.content}>
-        {/* Sidebar */}
-        <View style={styles.sidebar}>
-          <Text style={styles.sidebarTitle}>August Masterclass</Text>
-          <ScrollView style={styles.courseList}>
-            {courses.map((course) => (
-              <TouchableOpacity
-                key={course.id}
-                style={[
-                  styles.courseItem,
-                  selectedCourse.id === course.id && styles.courseItemSelected
-                ]}
-                onPress={() => setSelectedCourse(course)}
-              >
-                <Text style={[
-                  styles.courseItemText,
-                  selectedCourse.id === course.id && styles.courseItemTextSelected
-                ]}>
-                  {course.title}
-                </Text>
-              </TouchableOpacity>
-            ))}
-          </ScrollView>
-        </View>
-
-        {/* Main Content */}
-        <View style={styles.mainContent}>
-          <View style={styles.videoHeader}>
-            <Text style={styles.videoTitle}>{selectedCourse.title}</Text>
-            <TouchableOpacity style={styles.completedButton}>
-              <Text style={styles.completedButtonText}>✓</Text>
+        <ScrollView style={styles.subCourseList}>
+          {SUB_COURSES.map((sub) => (
+            <TouchableOpacity
+              key={sub.id}
+              style={styles.subCourseItem}
+              onPress={() => handleSubCoursePress(sub.url)}
+            >
+              <Text style={styles.subCourseText}>{sub.id} {sub.title}</Text>
             </TouchableOpacity>
-          </View>
-
-          {selectedCourse.videoId ? (
-            <View style={styles.videoContainer}>
-              <WebView
-                source={{ uri: getVideoEmbedUrl(selectedCourse.videoId) }}
-                style={styles.webview}
-                allowsInlineMediaPlayback={true}
-                mediaPlaybackRequiresUserAction={false}
-                javaScriptEnabled={true}
-                domStorageEnabled={true}
-                startInLoadingState={true}
-                mixedContentMode="compatibility"
-              />
-            </View>
-          ) : (
-            <View style={styles.noVideoContainer}>
-              <Text style={styles.noVideoText}>Video coming soon</Text>
-            </View>
-          )}
-
-          {selectedCourse.description && (
-            <Text style={styles.description}>{selectedCourse.description}</Text>
-          )}
-        </View>
+          ))}
+        </ScrollView>
       </View>
     </View>
   );
@@ -156,130 +89,27 @@ const styles = StyleSheet.create({
     fontSize: 24,
     fontWeight: '700',
     color: '#1A1A1A',
-    marginBottom: 15,
-  },
-  progressContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 15,
-  },
-  progressText: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#666',
-  },
-  progressBar: {
-    flex: 1,
-    height: 8,
-    backgroundColor: '#E1E4E8',
-    borderRadius: 4,
-  },
-  progressFill: {
-    height: '100%',
-    width: '0%',
-    backgroundColor: '#4B3BE7',
-    borderRadius: 4,
   },
   content: {
     flex: 1,
-    flexDirection: 'row',
+    padding: 24,
   },
-  sidebar: {
-    width: width * 0.35,
-    backgroundColor: '#FFFFFF',
-    borderRightWidth: 1,
-    borderRightColor: '#E1E4E8',
-    paddingVertical: 20,
-  },
-  sidebarTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#1A1A1A',
-    paddingHorizontal: 20,
-    marginBottom: 20,
-  },
-  courseList: {
+  subCourseList: {
     flex: 1,
   },
-  courseItem: {
-    paddingVertical: 15,
-    paddingHorizontal: 20,
-    borderBottomWidth: 1,
-    borderBottomColor: '#F0F0F0',
+  subCourseItem: {
+    backgroundColor: '#FFF',
+    paddingVertical: 18,
+    paddingHorizontal: 16,
+    borderRadius: 8,
+    marginBottom: 14,
+    borderWidth: 1,
+    borderColor: '#E1E4E8',
   },
-  courseItemSelected: {
-    backgroundColor: '#FFF9E6',
-    borderRightWidth: 3,
-    borderRightColor: '#F59E0B',
-  },
-  courseItemText: {
-    fontSize: 14,
-    color: '#666',
-    lineHeight: 20,
-  },
-  courseItemTextSelected: {
+  subCourseText: {
+    fontSize: 16,
     color: '#1A1A1A',
     fontWeight: '500',
-  },
-  mainContent: {
-    flex: 1,
-    backgroundColor: '#FFFFFF',
-    padding: 30,
-  },
-  videoHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 20,
-  },
-  videoTitle: {
-    fontSize: 22,
-    fontWeight: '700',
-    color: '#1A1A1A',
-    flex: 1,
-    lineHeight: 28,
-  },
-  completedButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: '#E1E4E8',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginLeft: 15,
-  },
-  completedButtonText: {
-    fontSize: 18,
-    color: '#666',
-  },
-  videoContainer: {
-    width: '100%',
-    height: 400,
-    backgroundColor: '#000',
-    borderRadius: 12,
-    overflow: 'hidden',
-    marginBottom: 20,
-  },
-  webview: {
-    flex: 1,
-  },
-  noVideoContainer: {
-    width: '100%',
-    height: 400,
-    backgroundColor: '#F0F0F0',
-    borderRadius: 12,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: 20,
-  },
-  noVideoText: {
-    fontSize: 18,
-    color: '#666',
-  },
-  description: {
-    fontSize: 16,
-    color: '#666',
-    lineHeight: 24,
   },
 });
 
