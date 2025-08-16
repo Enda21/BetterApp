@@ -6,13 +6,15 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { Ionicons, MaterialCommunityIcons, Feather } from '@expo/vector-icons';
 
 // Screens
+
 import Home from './screens/Home';
 import TrainingPlan from './screens/TrainingPlan';
 import Courses from './screens/Courses';
 import ExternalLinks from './screens/ExternalLinks';
 import WeeklyCheckIn from './screens/WeeklyCheckIn';
-import ReportIssue from './screens/ReportIssue'; 
-import Nutrition  from './screens/Nutrition';
+import ReportIssue from './screens/ReportIssue';
+import Nutrition from './screens/Nutrition';
+import OpenTrueCoachInApp from './screens/OpenTrueCoachInApp';
 
 
 const Tab = createBottomTabNavigator();
@@ -49,10 +51,12 @@ export default function App() {
               return <Feather name="link" size={size} color={color} />;
             } else if (route.name === 'Check In') {
               return <MaterialCommunityIcons name="target" size={size} color={color} />;
+            } else if (route.name === 'Nutrition') {
+              return <MaterialCommunityIcons name="apple" size={size} color={color} />;
+            } else if (route.name === 'TrueCoach') {
+              return <MaterialCommunityIcons name="run" size={size} color={color} />;
             }
-            else if (route.name === 'Nutrition') {
-              return <MaterialCommunityIcons name="apple" size={size} color={color} />; 
-            }
+            return null;
           },
           tabBarActiveTintColor: '#4B3BE7',
           tabBarInactiveTintColor: 'gray',
@@ -65,6 +69,7 @@ export default function App() {
         <Tab.Screen name="Check In" component={WeeklyCheckIn} />
         <Tab.Screen name="Nutrition" component={Nutrition} />
         <Tab.Screen name="External Links" component={ExternalLinks} />
+        <Tab.Screen name="TrueCoach" component={OpenTrueCoachInApp} options={{ title: 'TrueCoach' }} />
       </Tab.Navigator>
     </NavigationContainer>
   );
