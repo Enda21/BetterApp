@@ -12,7 +12,7 @@ type Options = {
 
 const withTrueCoachQueries: ConfigPlugin<Options> = (config, props = {}) => {
   const scheme = props.scheme ?? "truecoach";
-  const androidPackage = props.androidPackage ?? "com.truecoach";
+  const androidPackage = props.androidPackage ?? "co.truecoach.client";
 
   // --- iOS: allow canOpenURL for the custom scheme
   config = withInfoPlist(config, (cfg) => {

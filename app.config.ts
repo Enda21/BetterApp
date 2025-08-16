@@ -19,6 +19,6 @@ export default {
     android: {
       package: "com.brody32.better",
     },
-    plugins: [[withTrueCoachQueries, { scheme: "truecoach", androidPackage: "com.truecoach" }]],
+    plugins: [[withTrueCoachQueries, { scheme: "truecoach", androidPackage: "co.truecoach.client" }]],
   },
 };
