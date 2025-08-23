@@ -1,6 +1,4 @@
 import { ConfigPlugin, withAndroidManifest } from "@expo/config-plugins";
-import withTrueCoachQueries from "./plugins/with-truecoach-queries";
-
 
 export default {
   expo: {
@@ -19,6 +17,8 @@ export default {
     android: {
       package: "com.brody32.better",
     },
-    plugins: [[withTrueCoachQueries, { scheme: "truecoach", androidPackage: "co.truecoach.client" }]],
+    plugins: [
+      ["./plugins/with-truecoach-queries.js",{ scheme: "truecoach", androidPackage: "co.truecoach.client"}]
+    ],
   },
 };

@@ -8,7 +8,6 @@ import { Ionicons, MaterialCommunityIcons, Feather } from '@expo/vector-icons';
 // Screens
 
 import Home from './screens/Home';
-import TrainingPlan from './screens/TrainingPlan';
 import Courses from './screens/Courses';
 import ExternalLinks from './screens/ExternalLinks';
 import WeeklyCheckIn from './screens/WeeklyCheckIn';
@@ -19,7 +18,6 @@ import OpenTrueCoachInApp from './screens/OpenTrueCoachInApp';
 
 const Tab = createBottomTabNavigator();
 const HomeStack = createNativeStackNavigator();
-const NutritionStack = createNativeStackNavigator();
 
 function HomeStackScreen() {
   return (
@@ -43,8 +41,6 @@ export default function App() {
                   style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: 'white' }}
                 />
               );
-            } else if (route.name === 'Training Plan') {
-              return <MaterialCommunityIcons name="dumbbell" size={size} color={color} />;
             } else if (route.name === 'Courses') {
               return <Ionicons name="book-outline" size={size} color={color} />;
             } else if (route.name === 'External Links') {
@@ -54,7 +50,7 @@ export default function App() {
             } else if (route.name === 'Nutrition') {
               return <MaterialCommunityIcons name="apple" size={size} color={color} />;
             } else if (route.name === 'TrueCoach') {
-              return <MaterialCommunityIcons name="run" size={size} color={color} />;
+              return <MaterialCommunityIcons name="dumbbell" size={size} color={color} />;
             }
             return null;
           },
@@ -64,12 +60,11 @@ export default function App() {
         })}
       >
         <Tab.Screen name="Home" component={HomeStackScreen} />
-        <Tab.Screen name="Training Plan" component={TrainingPlan} />
+        <Tab.Screen name="TrueCoach" component={OpenTrueCoachInApp} />
         <Tab.Screen name="Courses" component={Courses} />
         <Tab.Screen name="Check In" component={WeeklyCheckIn} />
         <Tab.Screen name="Nutrition" component={Nutrition} />
         <Tab.Screen name="External Links" component={ExternalLinks} />
-        <Tab.Screen name="TrueCoach" component={OpenTrueCoachInApp} options={{ title: 'TrueCoach' }} />
       </Tab.Navigator>
     </NavigationContainer>
   );
