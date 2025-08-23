@@ -2,8 +2,8 @@ import { ConfigPlugin, withAndroidManifest } from "@expo/config-plugins";
 
 export default {
   expo: {
-    name: "better",
-    slug: "better",
+    name: "Better",
+    slug: "betterapp",
     owner: "brody32", // optional but recommended
     extra: {
       eas: {
