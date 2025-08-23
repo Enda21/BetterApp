@@ -17,7 +17,7 @@ function withTrueCoachQueries(config, opts = {}) {
     return cfg;
   });
 
-  // Android: package visibility + VIEW intent for the scheme
+  // Android: package visibility + multiple intent queries
   config = withAndroidManifest(config, (cfg) => {
     const manifest = cfg.modResults;
     if (!manifest.manifest.queries) manifest.manifest.queries = [{}];
@@ -33,15 +33,26 @@ function withTrueCoachQueries(config, opts = {}) {
 
     // <intent> with VIEW + scheme
     queries.intent = queries.intent ?? [];
-    const hasIntent = queries.intent.some(
+    const hasSchemeIntent = queries.intent.some(
       (i) =>
         i.action?.[0]?.$["android:name"] === "android.intent.action.VIEW" &&
         i.data?.[0]?.$["android:scheme"] === scheme
     );
-    if (!hasIntent) {
+    if (!hasSchemeIntent) {
       queries.intent.push({
         action: [{ $: { "android:name": "android.intent.action.VIEW" } }],
         data: [{ $: { "android:scheme": scheme } }],
+      });
+    }
+
+    // Add MAIN intent for package launching
+    const hasMainIntent = queries.intent.some(
+      (i) => i.action?.[0]?.$["android:name"] === "android.intent.action.MAIN"
+    );
+    if (!hasMainIntent) {
+      queries.intent.push({
+        action: [{ $: { "android:name": "android.intent.action.MAIN" } }],
+        category: [{ $: { "android:name": "android.intent.category.LAUNCHER" } }],
       });
     }
 

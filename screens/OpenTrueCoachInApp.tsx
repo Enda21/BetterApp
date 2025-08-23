@@ -11,24 +11,43 @@ export default function OpenTrueCoachInApp() {
   const open = useCallback(async () => {
     try {
       if (Platform.OS === 'android') {
-        // Try to open the app directly using the package name
+        // Method 1: Try Android package launch intent (most reliable)
         try {
-          await Linking.openURL(`intent://app/#Intent;package=${TRUECOACH_PACKAGE};scheme=truecoach;end`);
+          await Linking.openURL(`intent:#Intent;package=${TRUECOACH_PACKAGE};end`);
           return;
         } catch (error) {
-          // If that fails, try the scheme
-          try {
-            const supported = await Linking.canOpenURL(TRUECOACH_SCHEME);
-            if (supported) {
-              await Linking.openURL(TRUECOACH_SCHEME);
-              return;
-            }
-          } catch (schemeError) {
-            // Both methods failed, open Play Store
-            await Linking.openURL(PLAY_SEARCH);
+          console.log('Package intent failed:', error);
+        }
+
+        // Method 2: Try launcher intent with specific package
+        try {
+          await Linking.openURL(`intent:#Intent;action=android.intent.action.MAIN;category=android.intent.category.LAUNCHER;package=${TRUECOACH_PACKAGE};end`);
+          return;
+        } catch (error) {
+          console.log('Launcher intent failed:', error);
+        }
+
+        // Method 3: Try the custom scheme
+        try {
+          const supported = await Linking.canOpenURL(TRUECOACH_SCHEME);
+          if (supported) {
+            await Linking.openURL(TRUECOACH_SCHEME);
             return;
           }
+        } catch (error) {
+          console.log('Scheme failed:', error);
         }
+
+        // Method 4: Try market://details (direct to app page if installed)
+        try {
+          await Linking.openURL(`market://details?id=${TRUECOACH_PACKAGE}`);
+          return;
+        } catch (error) {
+          console.log('Market URL failed:', error);
+        }
+
+        // Final fallback: Play Store web
+        await Linking.openURL(PLAY_SEARCH);
       } else {
         // iOS logic remains the same
         const supported = await Linking.canOpenURL(TRUECOACH_SCHEME);
@@ -36,9 +55,8 @@ export default function OpenTrueCoachInApp() {
           await Linking.openURL(TRUECOACH_SCHEME);
           return;
         }
+        await Linking.openURL(APPLE_SEARCH);
       }
-      // Fallback: open store search
-      await Linking.openURL(Platform.select({ android: PLAY_SEARCH, ios: APPLE_SEARCH })!);
     } catch (e) {
       Alert.alert("Unable to open TrueCoach", String(e));
     }
