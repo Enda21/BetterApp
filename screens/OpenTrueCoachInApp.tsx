@@ -4,15 +4,10 @@ import { View, Button, Alert, Linking, Platform } from "react-native";
 
 const TRUECOACH_SCHEME = "truecoach://";
 const TRUECOACH_PACKAGES = [
-  "co.truecoach.client.beta", // beta first (your device)
-  "co.truecoach.client",
-  "com.truecoach.client",
-  "co.truecoach.client",
-  "co.truecoach.beta",
-  "co.truecoach",
-  "com.truecoach",
-  "com.truecoach.beta",
-  "com.truecoach.client.beta",
+  "co.truecoach.client",     // Production client app
+  "co.truecoach.client.beta", // Beta client app (likely what you have)
+  "com.truecoach.client",    // Alternative package name
+  "com.truecoach.client.beta" // Alternative beta package name
 ];
 const PLAY_SEARCH = "https://play.google.com/store/search?q=TrueCoach&c=apps";
 const APPLE_SEARCH = "https://apps.apple.com/us/search?term=truecoach";

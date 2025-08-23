@@ -7,6 +7,9 @@ function withTrueCoachQueries(config, opts = {}) {
   const androidPackages = opts.androidPackages ?? [
     "co.truecoach.client", // client app
     "co.truecoach.coach",  // coach app (harmless to include)
+    "co.truecoach.client.beta", // Beta client app (likely what you have)
+    "com.truecoach.client",    // Alternative package name
+    "com.truecoach.beta", 
   ];
 
   // iOS: allow canOpenURL for the scheme

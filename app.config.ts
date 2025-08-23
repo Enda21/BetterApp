@@ -21,14 +21,10 @@ export default {
       ["./plugins/with-truecoach-queries.js",{ 
         scheme: "truecoach", 
         androidPackage: [
-          "co.truecoach.client",
-          "co.truecoach.client.beta",
-          "co.truecoach.beta",
-          "co.truecoach",
-          "com.truecoach",
-          "com.truecoach.client",
-          "com.truecoach.beta",
-          "com.truecoach.client.beta"
+          "co.truecoach.client",     // Production client app
+          "co.truecoach.client.beta", // Beta client app (likely what you have)
+          "com.truecoach.client",    // Alternative package name
+          "com.truecoach.beta",      // Coach app (harmless to include
         ]
     }],
   ]
