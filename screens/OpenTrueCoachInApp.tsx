@@ -11,23 +11,7 @@ export default function OpenTrueCoachInApp() {
   const open = useCallback(async () => {
     try {
       if (Platform.OS === 'android') {
-        // Method 1: Try Android package launch intent (most reliable)
-        try {
-          await Linking.openURL(`intent:#Intent;package=${TRUECOACH_PACKAGE};end`);
-          return;
-        } catch (error) {
-          console.log('Package intent failed:', error);
-        }
-
-        // Method 2: Try launcher intent with specific package
-        try {
-          await Linking.openURL(`intent:#Intent;action=android.intent.action.MAIN;category=android.intent.category.LAUNCHER;package=${TRUECOACH_PACKAGE};end`);
-          return;
-        } catch (error) {
-          console.log('Launcher intent failed:', error);
-        }
-
-        // Method 3: Try the custom scheme
+        // Method 1: Try the custom scheme first (most reliable for React Native)
         try {
           const supported = await Linking.canOpenURL(TRUECOACH_SCHEME);
           if (supported) {
@@ -38,7 +22,7 @@ export default function OpenTrueCoachInApp() {
           console.log('Scheme failed:', error);
         }
 
-        // Method 4: Try market://details (direct to app page if installed)
+        // Method 2: Try market://details (direct to app page if installed)
         try {
           await Linking.openURL(`market://details?id=${TRUECOACH_PACKAGE}`);
           return;
@@ -46,7 +30,15 @@ export default function OpenTrueCoachInApp() {
           console.log('Market URL failed:', error);
         }
 
-        // Final fallback: Play Store web
+        // Method 3: Try Google Play Store direct link
+        try {
+          await Linking.openURL(`https://play.google.com/store/apps/details?id=${TRUECOACH_PACKAGE}`);
+          return;
+        } catch (error) {
+          console.log('Play Store direct link failed:', error);
+        }
+
+        // Final fallback: Play Store search
         await Linking.openURL(PLAY_SEARCH);
       } else {
         // iOS logic remains the same
