@@ -18,7 +18,19 @@ export default {
       package: "com.brody32.better",
     },
     plugins: [
-      ["./plugins/with-truecoach-queries.js",{ scheme: "truecoach", androidPackage: "co.truecoach.client"}]
-    ],
+      ["./plugins/with-truecoach-queries.js",{ 
+        scheme: "truecoach", 
+        androidPackage: [
+          "co.truecoach.client",
+          "co.truecoach.client.beta",
+          "co.truecoach.beta",
+          "co.truecoach",
+          "com.truecoach",
+          "com.truecoach.client",
+          "com.truecoach.beta",
+          "com.truecoach.client.beta"
+        ]
+    }],
+  ]
   },
 };
