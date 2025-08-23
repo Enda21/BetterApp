@@ -6,16 +6,27 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { Ionicons, MaterialCommunityIcons, Feather } from '@expo/vector-icons';
 
 // Screens
+
 import Home from './screens/Home';
-import TrainingPlan from './screens/TrainingPlan';
 import Courses from './screens/Courses';
-import Calendar from './screens/Calendar';
 import ExternalLinks from './screens/ExternalLinks';
-import TouchPoint from './screens/TouchPoint';
-import Podcasts from './screens/Podcasts';
+import WeeklyCheckIn from './screens/WeeklyCheckIn';
+import ReportIssue from './screens/ReportIssue';
+import Nutrition from './screens/Nutrition';
+import OpenTrueCoachInApp from './screens/OpenTrueCoachInApp';
+
 
 const Tab = createBottomTabNavigator();
-const Stack = createNativeStackNavigator();
+const HomeStack = createNativeStackNavigator();
+
+function HomeStackScreen() {
+  return (
+    <HomeStack.Navigator screenOptions={{ headerShown: false }}>
+      <HomeStack.Screen name="Home" component={Home} />
+      <HomeStack.Screen name="ReportIssue" component={ReportIssue} />
+    </HomeStack.Navigator>
+  );
+}
 
 export default function App() {
   return (
@@ -30,31 +41,29 @@ export default function App() {
                   style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: 'white' }}
                 />
               );
-            } else if (route.name === 'Training Plan') {
-              return <MaterialCommunityIcons name="dumbbell" size={size} color={color} />;
             } else if (route.name === 'Courses') {
               return <Ionicons name="book-outline" size={size} color={color} />;
-            } else if (route.name === 'Calendar') {
-              return <Feather name="calendar" size={size} color={color} />;
             } else if (route.name === 'External Links') {
               return <Feather name="link" size={size} color={color} />;
-            } else if (route.name === 'Touch Point') {
+            } else if (route.name === 'Check In') {
               return <MaterialCommunityIcons name="target" size={size} color={color} />;
-            } else if (route.name === 'Podcasts') {
-              return <Ionicons name="headset-outline" size={size} color={color} />;
+            } else if (route.name === 'Nutrition') {
+              return <MaterialCommunityIcons name="apple" size={size} color={color} />;
+            } else if (route.name === 'TrueCoach') {
+              return <MaterialCommunityIcons name="dumbbell" size={size} color={color} />;
             }
+            return null;
           },
           tabBarActiveTintColor: '#4B3BE7',
           tabBarInactiveTintColor: 'gray',
           headerShown: false,
         })}
       >
-        <Tab.Screen name="Home" component={Home} />
-        <Tab.Screen name="Training Plan" component={TrainingPlan} />
+        <Tab.Screen name="Home" component={HomeStackScreen} />
+        <Tab.Screen name="TrueCoach" component={OpenTrueCoachInApp} />
         <Tab.Screen name="Courses" component={Courses} />
-        <Tab.Screen name="Calendar" component={Calendar} />
-        <Tab.Screen name="Touch Point" component={TouchPoint} />
-        <Tab.Screen name="Podcasts" component={Podcasts} />
+        <Tab.Screen name="Check In" component={WeeklyCheckIn} />
+        <Tab.Screen name="Nutrition" component={Nutrition} />
         <Tab.Screen name="External Links" component={ExternalLinks} />
       </Tab.Navigator>
     </NavigationContainer>

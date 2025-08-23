@@ -8,10 +8,22 @@
     "userInterfaceStyle": "light",
     "newArchEnabled": true,
     "ios": {
+      "infoPlist": {
+        "LSApplicationQueriesSchemes": ["truecoach"]
+      },
       "supportsTablet": true,
       "bundleIdentifier": "com.brody32.betterapp"
     },
     "android": {
+      "intentFilters": [
+     {
+      "action": "VIEW",
+      "data": {
+        "scheme": "truecoach"
+      },
+      "category": ["BROWSABLE", "DEFAULT"]
+      }
+    ],
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
@@ -31,6 +43,10 @@
     },
     "updates": {
       "url": "https://u.expo.dev/5b41f115-f574-4426-ac48-bab34012dd86"
-    }
+    },
+    "plugins": [
+      "expo-mail-composer",
+      "with-truecoach-queries"
+    ]
   }
 }

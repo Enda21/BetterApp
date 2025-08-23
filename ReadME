@@ -1,3 +1,5 @@
 # Start App
 npx expo start
 # When Running typ r in the terminal to refresh the app
+# To push Changes to Expo hosting
+eas update
