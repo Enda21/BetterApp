@@ -64,8 +64,8 @@ export default function OpenTrueCoachInApp() {
   }, []);
 
   return (
-    <View style={{ flex: 1, alignItems: "center", justifyContent: "center", padding: 24 }}>
-      <Button title="Open TrueCoach" onPress={open} />
+    <View style={{ flex: 1, alignItems: "center", justifyContent: "center", padding: 24, backgroundColor: '#F1EFE7' }}>
+      <Button title="Open TrueCoach" onPress={open} color="#4B3BE7" />
     </View>
   );
 }
