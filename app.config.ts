@@ -20,7 +20,7 @@ export default {
     plugins: [
       ["./plugins/with-truecoach-queries.js",{ 
         scheme: "truecoach", 
-        androidPackage: [
+        androidPackages: [
           "co.truecoach.client",     // Production client app
           "co.truecoach.client.beta", // Beta client app (likely what you have)
           "com.truecoach.client",    // Alternative package name
