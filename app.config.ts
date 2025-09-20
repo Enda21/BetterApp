@@ -1,10 +1,12 @@
 import { ConfigPlugin, withAndroidManifest } from "@expo/config-plugins";
+import { version } from "react";
 
 export default {
   expo: {
     name: "Better",
     slug: "betterapp",
     owner: "brody32", // optional but recommended
+    version: "1.0.0",
     extra: {
       eas: {
         projectId: "4dc1c75e-9745-4348-90e7-2d5241a419e3", // <- from your screenshot
@@ -16,6 +18,8 @@ export default {
     },
     android: {
       package: "com.brody32.better",
+      versionCode: 1,
+      Permissions: [],
     },
     plugins: [
       ["./plugins/with-truecoach-queries.js",{ 

@@ -15,6 +15,9 @@
       "bundleIdentifier": "com.brody32.betterapp"
     },
     "android": {
+      "package": "com.brody32.better",
+      "versionCode": 1,
+      "permissions": [],
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
