@@ -53,7 +53,7 @@ const Courses = () => {
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>New Member 4 Week Launch Pad: Start</Text>
+        <Text style={styles.headerTitle}>New Member Launch Pad</Text>
       </View>
       <View style={styles.content}>
         <ScrollView style={styles.subCourseList}>
@@ -75,20 +75,20 @@ const Courses = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F5F6F7',
+    backgroundColor: '#F1EFE7',
   },
   header: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#0947aaff',
     paddingTop: 60,
     paddingBottom: 20,
     paddingHorizontal: 20,
     borderBottomWidth: 1,
-    borderBottomColor: '#E1E4E8',
+    borderBottomColor: '#1E293B',
   },
   headerTitle: {
     fontSize: 24,
     fontWeight: '700',
-    color: '#1A1A1A',
+    color: '#FFFFFF',
   },
   content: {
     flex: 1,
@@ -98,13 +98,13 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   subCourseItem: {
-    backgroundColor: '#FFF',
+    backgroundColor: '#FFFFFF',
     paddingVertical: 18,
     paddingHorizontal: 16,
     borderRadius: 8,
     marginBottom: 14,
     borderWidth: 1,
-    borderColor: '#E1E4E8',
+    borderColor: '#4B3BE7',
   },
   subCourseText: {
     fontSize: 16,

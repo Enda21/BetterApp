@@ -117,24 +117,24 @@ ${description}`;
 export default ReportIssue;
 
 const styles = StyleSheet.create({
-    scrollContainer: {
-        flexGrow: 1,
-        backgroundColor: '#fff',
-    },
-    container: { flex: 1, padding: 20, backgroundColor: '#fff' },
-    title: { fontSize: 24, fontWeight: 'bold', marginBottom: 20 },
-    input: { borderWidth: 1, borderColor: '#ccc', padding: 10, borderRadius: 8, marginBottom: 15 },
-    textArea: { height: 120, textAlignVertical: 'top' },
-    picker: { height: 50, marginBottom: 15 },
-    label: { marginBottom: 4, fontWeight: '600' },
-    readOnlyBox: {
-        borderWidth: 1,
-        borderColor: '#ccc',
-        padding: 10,
-        borderRadius: 8,
-        marginBottom: 15,
-        backgroundColor: '#f2f2f2',
-    },
+  scrollContainer: {
+      flexGrow: 1,
+      backgroundColor: '#F1EFE7',
+  },
+  container: { flex: 1, padding: 20, backgroundColor: '#F1EFE7' },
+  title: { fontSize: 24, fontWeight: 'bold', marginBottom: 20, color: '#1A1A1A' },
+  input: { borderWidth: 1, borderColor: '#4B3BE7', padding: 10, borderRadius: 8, marginBottom: 15, color: '#1A1A1A', backgroundColor: '#FFFFFF' },
+  textArea: { height: 120, textAlignVertical: 'top', color: '#1A1A1A', backgroundColor: '#FFFFFF' },
+  picker: { height: 50, marginBottom: 15, color: '#1A1A1A', backgroundColor: '#FFFFFF' },
+  label: { marginBottom: 4, fontWeight: '600', color: '#1A1A1A' },
+  readOnlyBox: {
+    borderWidth: 1,
+    borderColor: '#4B3BE7',
+    padding: 10,
+    borderRadius: 8,
+    marginBottom: 15,
+    backgroundColor: '#FFFFFF',
+  },
     imagePicker: {
         backgroundColor: '#4B3BE7',
         padding: 10,
@@ -142,7 +142,7 @@ const styles = StyleSheet.create({
         marginBottom: 15,
         alignItems: 'center',
     },
-    imagePickerText: { color: '#fff', fontWeight: 'bold' },
+  imagePickerText: { color: '#1A1A1A', fontWeight: 'bold' },
     previewImage: {
         width: '100%',
         height: 200,
@@ -156,7 +156,7 @@ const styles = StyleSheet.create({
         borderRadius: 8,
         alignItems: 'center',
     },
-    sendButtonText: { color: '#fff', fontWeight: 'bold', fontSize: 16 },
+  sendButtonText: { color: '#1A1A1A', fontWeight: 'bold', fontSize: 16 },
 });
 
 

@@ -41,13 +41,14 @@ const WeeklyCheckIn = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#0A1628',
+    backgroundColor: '#F1EFE7',
   },
   header: {
     paddingTop: 60,
     paddingBottom: 30,
     paddingHorizontal: 20,
     alignItems: 'center',
+    backgroundColor: '#0947aaff',
   },
   headerTitle: {
     fontSize: 24,
@@ -65,7 +66,7 @@ const styles = StyleSheet.create({
     padding: 20,
   },
   card: {
-    backgroundColor: '#1E293B',
+    backgroundColor: '#0947aaff',
     borderRadius: 16,
     padding: 20,
     marginBottom: 20,

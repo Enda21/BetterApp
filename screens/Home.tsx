@@ -30,17 +30,18 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#fff',
+    backgroundColor: '#F1EFE7',
   },
   logo: {
-    width: 100,
-    height: 100,
+    width: 300,
+    height: 300,
     resizeMode: 'contain',
     marginBottom: 20,
   },
   text: {
     fontSize: 24,
     fontWeight: 'bold',
+    color: '#1A1A1A',
   },
   reportButton: {
   marginTop: 20,

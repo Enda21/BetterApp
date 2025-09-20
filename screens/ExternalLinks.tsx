@@ -14,6 +14,6 @@ const ExternalLinks = () => {
 export default ExternalLinks;
 
 const styles = StyleSheet.create({
-  container: { flex: 1, justifyContent: 'center', alignItems: 'center', gap: 20 },
-  text: { fontSize: 20, marginBottom: 20 },
+  container: { flex: 1, justifyContent: 'center', alignItems: 'center', gap: 20, backgroundColor: '#F1EFE7' },
+  text: { fontSize: 20, marginBottom: 20, color: '#1A1A1A' },
 });
