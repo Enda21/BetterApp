@@ -14,14 +14,12 @@
     "production": {
       "autoIncrement": true,
       "android": { "buildType": "app-bundle" }
+    },
+    "apk": {
+      "android": { "buildType": "apk" }
     }
   },
   "submit": {
     "production": { "android": { "track": "internal" } }
-  },
-   "build": {
-    "apk": {
-      "android": { "buildType": "apk" }
-    }
   }
 }
