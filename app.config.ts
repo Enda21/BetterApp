@@ -15,7 +15,11 @@ export default {
     },
     ios: {
       bundleIdentifier: "com.brody32.better",
-      infoPlist: { LSApplicationQueriesSchemes: ["truecoach"] },
+      buildNumber: "1.0.0",
+      infoPlist: {
+        LSApplicationQueriesSchemes: ["truecoach"],
+        ITSAppUsesNonExemptEncryption: false
+      }
     },
     android: {
       package: "com.brody32.better",
