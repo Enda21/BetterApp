@@ -15,7 +15,7 @@ export default {
     },
     ios: {
       bundleIdentifier: "com.brody32.better",
-      buildNumber: "1.0.1",
+      buildNumber: "1.0.2",
       infoPlist: {
         LSApplicationQueriesSchemes: ["truecoach"],
         ITSAppUsesNonExemptEncryption: false
@@ -24,7 +24,7 @@ export default {
     },
     android: {
       package: "com.brody32.better",
-      versionCode: 2,
+      versionCode: 3,
       Permissions: [],
        foregroundImage: "./assets/adaptive-icon.png", // transparent PNG
         backgroundColor: "#FFFFFF",
