@@ -6,7 +6,7 @@ export default {
     name: "Better",
     slug: "betterapp",
     owner: "brody32", // optional but recommended
-    version: "1.0.0",
+    version: "1.0.1",
     icon: "./assets/BetterLogo2.png",
     extra: {
       eas: {
@@ -19,7 +19,8 @@ export default {
       infoPlist: {
         LSApplicationQueriesSchemes: ["truecoach"],
         ITSAppUsesNonExemptEncryption: false
-      }
+      },
+       icon: "./assets/BetterLogo2.png"
     },
     android: {
       package: "com.brody32.better",
