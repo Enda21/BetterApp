@@ -3,3 +3,15 @@ npx expo start
 # When Running typ r in the terminal to refresh the app
 # To push Changes to Expo hosting
 eas update
+
+# How to build Android to go to production
+In app.Config version Has to go up by 1 
+eas build -p android --profile production
+Option B — manual upload:
+Play Console → Testing → Internal testing → Create release → Upload the .aab.
+Add testers (email list / Google Groups) → Save → Roll out.
+
+# How to build IOs to go to Production
+In app.Config version Has to go up by 1 
+eas build --platform ios
+eas submit --platform ios
