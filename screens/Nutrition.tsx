@@ -153,7 +153,7 @@ const Nutrition = () => {
   const downloadAndShare = async (item: MealPlan) => {
     try {
       if (!item.url) throw new Error('Missing file URL');
-      const dest = FileSystem.documentDirectory + item.filename;
+  const dest = (FileSystem as any).documentDirectory + item.filename;
 
       const info = await FileSystem.getInfoAsync(dest);
       if (!info.exists) {

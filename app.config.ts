@@ -15,16 +15,17 @@ export default {
     },
     ios: {
       bundleIdentifier: "com.brody32.better",
-      buildNumber: "1.0.2",
+      buildNumber: "1.0.3",
       infoPlist: {
         LSApplicationQueriesSchemes: ["truecoach"],
-        ITSAppUsesNonExemptEncryption: false
+        ITSAppUsesNonExemptEncryption: false,
+        NSPhotoLibraryUsageDescription: "Allow Better to access your photos so you can attach screenshots when reporting an issue."
       },
        icon: "./assets/BetterLogo2.png"
     },
     android: {
       package: "com.brody32.better",
-      versionCode: 3,
+      versionCode: 4,
       Permissions: [],
        foregroundImage: "./assets/adaptive-icon.png", // transparent PNG
         backgroundColor: "#FFFFFF",
