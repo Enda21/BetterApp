@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo, useState } from 'react';
 import { 
   View, 
   Text, 
@@ -6,7 +6,8 @@ import {
   TouchableOpacity, 
   ScrollView,
   Linking,
-  Dimensions 
+  Dimensions,
+  TextInput,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 
@@ -63,6 +64,19 @@ const SUB_COURSES = [
 
 const Courses = () => {
   const navigation: any = useNavigation();
+  const [query, setQuery] = useState('');
+
+  const filteredCourses = useMemo(() => {
+    const q = (query || '').trim().toLowerCase();
+    if (!q) return SUB_COURSES;
+    return SUB_COURSES.filter((s) => {
+      return (
+        (s.title || '').toLowerCase().includes(q) ||
+        (s.summary || '').toLowerCase().includes(q) ||
+        (s.id || '').toLowerCase().includes(q)
+      );
+    });
+  }, [query]);
 
   const handleSubCoursePress = (lesson: any) => {
     // Navigate into the in-app lesson viewer and pass the lesson.
@@ -79,8 +93,16 @@ const Courses = () => {
         <Text style={styles.headerTitle}>New Member Launch Pad</Text>
       </View>
       <View style={styles.content}>
+        <TextInput
+          placeholder="Search lessons or summaries..."
+          placeholderTextColor="#666"
+          value={query}
+          onChangeText={setQuery}
+          style={styles.searchInput}
+          clearButtonMode="while-editing"
+        />
         <ScrollView style={styles.subCourseList}>
-          {SUB_COURSES.map((sub) => (
+          {filteredCourses.map((sub) => (
             <TouchableOpacity
               key={sub.id}
               style={styles.subCourseItem}
@@ -93,11 +115,15 @@ const Courses = () => {
 
           <View style={{height: 10}} />
           <Text style={{color: '#666', marginBottom: 8}}>Open original lessons in browser:</Text>
-          {SUB_COURSES.map((sub) => (
-            <TouchableOpacity key={`ext-${sub.id}`} onPress={() => handleOpenExternal(sub.externalUrl)}>
-              <Text style={{color: '#0947aa', marginBottom: 6}}>{sub.id} - Open in browser</Text>
-            </TouchableOpacity>
-          ))}
+          {filteredCourses.length === 0 ? (
+            <Text style={{color: '#666'}}>No results for "{query}"</Text>
+          ) : (
+            filteredCourses.map((sub) => (
+              <TouchableOpacity key={`ext-${sub.id}`} onPress={() => handleOpenExternal(sub.externalUrl)}>
+                <Text style={{color: '#0947aa', marginBottom: 6}}>{sub.id} - Open in browser</Text>
+              </TouchableOpacity>
+            ))
+          )}
         </ScrollView>
       </View>
     </View>
@@ -147,6 +173,16 @@ const styles = StyleSheet.create({
     marginTop: 8,
     color: '#444',
     fontSize: 14,
+  },
+  searchInput: {
+    backgroundColor: '#fff',
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    borderRadius: 8,
+    marginBottom: 12,
+    borderWidth: 1,
+    borderColor: '#DDD',
+    color: '#000',
   },
 });
 

@@ -50,7 +50,7 @@ function MainTabs() {
           } else if (route.name === 'Check In') {
             return <MaterialCommunityIcons name="target" size={size} color={color} />;
           } else if (route.name === 'Nutrition') {
-            return <MaterialCommunityIcons name="apple" size={size} color={color} />;
+            return <MaterialCommunityIcons name="food-variant" size={size} color={color} />;
           } else if (route.name === 'TrueCoach') {
             return <MaterialCommunityIcons name="dumbbell" size={size} color={color} />;
           }

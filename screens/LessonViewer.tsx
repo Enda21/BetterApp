@@ -1,11 +1,13 @@
 import React from 'react';
-import { View, Text, StyleSheet, Dimensions } from 'react-native';
+import { View, Text, StyleSheet, Dimensions, TouchableOpacity } from 'react-native';
+import { useNavigation } from '@react-navigation/native';
 import { WebView } from 'react-native-webview';
 
 const { width } = Dimensions.get('window');
 
 // Use loose typing so this component can be registered easily in the navigator.
 const LessonViewer: React.FC<any> = ({ route }: any) => {
+  const navigation: any = useNavigation();
   const lesson = route?.params?.lesson ?? { title: 'No lesson', summary: '', videoUrl: '' };
 
   // Normalize common YouTube watch URLs to embed URLs
@@ -62,6 +64,9 @@ const LessonViewer: React.FC<any> = ({ route }: any) => {
             mixedContentMode="always"
           />
         </View>
+        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
+          <Text style={styles.backText}>‹ Back</Text>
+        </TouchableOpacity>
       </View>
     </View>
   );
@@ -75,6 +80,8 @@ const styles = StyleSheet.create({
   summary: { fontSize: 16, color: '#222', marginBottom: 12 },
   videoContainer: { height: (width * 9) / 16, width: '100%', backgroundColor: '#000' },
   webview: { flex: 1 },
+  backBtn: { marginTop: 10, alignSelf: 'flex-start', padding: 6 },
+  backText: { color: '#0947aa', fontSize: 16 },
 });
 
 export default LessonViewer;
