@@ -9,10 +9,8 @@ import {
   TextInput,
   RefreshControl,
   Platform,
-  ActionSheetIOS,
   ActivityIndicator,
 } from 'react-native';
-import * as FileSystem from 'expo-file-system';
 import * as Sharing from 'expo-sharing';
 import * as WebBrowser from 'expo-web-browser';
 import { Asset } from 'expo-asset';
@@ -149,51 +147,7 @@ const Nutrition = () => {
       Alert.alert('Error', 'Could not open the PDF.');
     }
   };
-
-  const downloadAndShare = async (item: MealPlan) => {
-    try {
-      if (!item.url) throw new Error('Missing file URL');
-  const dest = (FileSystem as any).documentDirectory + item.filename;
-
-      const info = await FileSystem.getInfoAsync(dest);
-      if (!info.exists) {
-        if (isHttpUrl(item.url)) {
-          const { uri } = await FileSystem.downloadAsync(item.url, dest);
-          if (!uri) throw new Error('Download returned empty URI');
-        } else {
-          await FileSystem.copyAsync({ from: item.url, to: dest });
-        }
-      }
-      await Sharing.shareAsync(dest);
-    } catch (e: any) {
-      Alert.alert('Download/Share Error', e?.message ?? 'Could not download or share this PDF.');
-    }
-  };
-
-  const promptOpenOrDownload = (item: MealPlan) => {
-    const doOpen = () => openInBrowser(item.url);
-    const doDownload = () => downloadAndShare(item);
-
-    if (Platform.OS === 'ios') {
-      ActionSheetIOS.showActionSheetWithOptions(
-        {
-          title: item.title,
-          options: ['Open', 'Download & Share', 'Cancel'],
-          cancelButtonIndex: 2,
-        },
-        (idx) => {
-          if (idx === 0) doOpen();
-          else if (idx === 1) doDownload();
-        }
-      );
-    } else {
-      Alert.alert(item.title, undefined, [
-        { text: 'Open', onPress: doOpen },
-        { text: 'Download & Share', onPress: doDownload },
-        { text: 'Cancel', style: 'cancel' },
-      ]);
-    }
-  };
+  // Note: Download & Share option removed. Tapping a card will directly open the PDF.
 
   return (
     <ScrollView
@@ -238,14 +192,14 @@ const Nutrition = () => {
         <TouchableOpacity
           key={`${item.filename}-${idx}`}
           style={styles.card}
-          onPress={() => promptOpenOrDownload(item)}
+          onPress={() => openInBrowser(item.url)}
           activeOpacity={0.8}
         >
           <Text style={styles.cardTitle}>{item.title}</Text>
           <Text style={styles.cardSub}>
             {item.filename.replace(/\.pdf$/i, '').slice(0, 80)}
           </Text>
-          <Text style={styles.cardHint}>Tap to Open or Download</Text>
+          <Text style={styles.cardHint}>Tap to Open</Text>
         </TouchableOpacity>
       ))}
 
