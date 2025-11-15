@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { 
   View, 
   Text, 
@@ -8,15 +8,28 @@ import {
   Linking,
   Dimensions,
   TextInput,
+  RefreshControl,
+  ActivityIndicator,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 
 const { width } = Dimensions.get('window');
 
+// Where course JSON files will live in your GitHub repo
+const GITHUB_COURSES_DIR = 'https://api.github.com/repos/Enda21/betterAppPdfs/contents/Courses';
+
+export type Course = {
+  id: string;
+  title: string;
+  summary: string;
+  videoUrl: string; // YouTube link or direct video
+  externalUrl: string; // Optional deep link to Skool or elsewhere
+};
+
 // A small set of sample lessons that include text content and an embeddable video URL.
 // These use YouTube embed URLs so the video can be shown inside a WebView in the app.
 // You can replace videoUrl with links to hosted mp4 files or other providers later.
-const SUB_COURSES = [
+const LOCAL_FALLBACK: Course[] = [
   {
     id: '1.1',
     title: 'Rules Of Engagement: How We Communicate',
@@ -65,18 +78,99 @@ const SUB_COURSES = [
 const Courses = () => {
   const navigation: any = useNavigation();
   const [query, setQuery] = useState('');
+  const [courses, setCourses] = useState<Course[] | null>(null);
+  const [refreshing, setRefreshing] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const validateCourse = (raw: any): raw is Course => {
+    return (
+      raw &&
+      typeof raw.id === 'string' &&
+      typeof raw.title === 'string' &&
+      typeof raw.summary === 'string' &&
+      typeof raw.videoUrl === 'string' &&
+      typeof raw.externalUrl === 'string'
+    );
+  };
+
+  // Load from GitHub: either manifest.json (single file) or per-file *.json
+  const loadFromGithub = useCallback(async () => {
+    setError(null);
+    try {
+      // List the Courses directory
+      const res = await fetch(`${GITHUB_COURSES_DIR}?_=${Date.now()}`, {
+        headers: {
+          'User-Agent': 'BeBetterMan-App',
+          Accept: 'application/vnd.github.v3+json',
+          'Cache-Control': 'no-cache',
+          Pragma: 'no-cache',
+        },
+      });
+      if (!res.ok) throw new Error(`GitHub API error: ${res.status}`);
+      const dirItems: Array<{ name: string; type: 'file' | 'dir'; download_url?: string; path: string }>= await res.json();
+
+      // Prefer manifest.json if present (single network fetch)
+      const manifest = dirItems.find((f) => f.type === 'file' && f.name.toLowerCase() === 'manifest.json');
+      if (manifest?.download_url) {
+        const mRes = await fetch(`${manifest.download_url}?_=${Date.now()}`);
+        if (!mRes.ok) throw new Error(`Manifest fetch failed: ${mRes.status}`);
+        const data = await mRes.json();
+        const list: Course[] = Array.isArray(data) ? data.filter(validateCourse) : [];
+        if (list.length === 0) throw new Error('Manifest empty or invalid');
+        // Sort by id natural-ish
+        list.sort((a, b) => a.id.localeCompare(b.id, undefined, { numeric: true }));
+        setCourses(list);
+        return;
+      }
+
+      // Else, fetch all *.json files in the folder
+      const jsonFiles = dirItems.filter((f) => f.type === 'file' && /\.json$/i.test(f.name));
+      const fetched = await Promise.all(
+        jsonFiles.map(async (f) => {
+          if (!f.download_url) return null;
+          try {
+            const r = await fetch(`${f.download_url}?_=${Date.now()}`);
+            if (!r.ok) return null;
+            const obj = await r.json();
+            return validateCourse(obj) ? obj : null;
+          } catch {
+            return null;
+          }
+        })
+      );
+      const list = fetched.filter(Boolean) as Course[];
+      if (list.length === 0) throw new Error('No valid course JSON found');
+      list.sort((a, b) => a.id.localeCompare(b.id, undefined, { numeric: true }));
+      setCourses(list);
+    } catch (e: any) {
+      setError('Could not load the latest courses from GitHub. Showing offline list.');
+      setCourses(LOCAL_FALLBACK);
+    }
+  }, []);
+
+  useEffect(() => {
+    loadFromGithub();
+  }, [loadFromGithub]);
+
+  const onRefresh = useCallback(async () => {
+    if (refreshing) return;
+    setRefreshing(true);
+    await loadFromGithub();
+    setRefreshing(false);
+  }, [refreshing, loadFromGithub]);
 
   const filteredCourses = useMemo(() => {
     const q = (query || '').trim().toLowerCase();
-    if (!q) return SUB_COURSES;
-    return SUB_COURSES.filter((s) => {
+    const source = courses ?? LOCAL_FALLBACK;
+    if (!q) return source;
+    return source.filter((s) => {
       return (
         (s.title || '').toLowerCase().includes(q) ||
         (s.summary || '').toLowerCase().includes(q) ||
         (s.id || '').toLowerCase().includes(q)
       );
     });
-  }, [query]);
+  }, [query, courses]);
 
   const handleSubCoursePress = (lesson: any) => {
     // Navigate into the in-app lesson viewer and pass the lesson.
@@ -93,6 +187,9 @@ const Courses = () => {
         <Text style={styles.headerTitle}>New Member Launch Pad</Text>
       </View>
       <View style={styles.content}>
+        {error ? (
+          <View style={styles.banner}><Text style={styles.bannerText}>{error}</Text></View>
+        ) : null}
         <TextInput
           placeholder="Search lessons or summaries..."
           placeholderTextColor="#666"
@@ -101,7 +198,17 @@ const Courses = () => {
           style={styles.searchInput}
           clearButtonMode="while-editing"
         />
-        <ScrollView style={styles.subCourseList}>
+        <ScrollView
+          style={styles.subCourseList}
+          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
+        >
+          {!courses && !error ? (
+            <View style={{ paddingVertical: 24, alignItems: 'center' }}>
+              <ActivityIndicator size="small" color="#0947aa" />
+              <Text style={{ marginTop: 8, color: '#555' }}>Loading courses…</Text>
+            </View>
+          ) : null}
+
           {filteredCourses.map((sub) => (
             <TouchableOpacity
               key={sub.id}
@@ -152,6 +259,14 @@ const styles = StyleSheet.create({
     flex: 1,
     padding: 24,
   },
+  banner: {
+    backgroundColor: '#fde68a',
+    padding: 10,
+    borderRadius: 8,
+    marginHorizontal: 2,
+    marginBottom: 10,
+  },
+  bannerText: { color: '#7c3e00' },
   subCourseList: {
     flex: 1,
   },
