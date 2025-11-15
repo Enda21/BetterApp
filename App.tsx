@@ -16,6 +16,7 @@ import Nutrition from './screens/Nutrition';
 import OpenTrueCoachInApp from './screens/OpenTrueCoachInApp';
 import LessonViewer from './screens/LessonViewer';
 import Podcasts from './screens/Podcasts';
+import PdfViewer from './screens/PdfViewer';
 
 
 const Tab = createBottomTabNavigator();
@@ -81,6 +82,7 @@ export default function App() {
       <RootStack.Navigator screenOptions={{ headerShown: false }}>
         <RootStack.Screen name="Main" component={MainTabs} />
         <RootStack.Screen name="Lesson" component={LessonViewer} />
+        <RootStack.Screen name="Pdf" component={PdfViewer} />
       </RootStack.Navigator>
     </NavigationContainer>
   );

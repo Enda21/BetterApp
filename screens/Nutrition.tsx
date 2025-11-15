@@ -8,13 +8,11 @@ import {
   View,
   TextInput,
   RefreshControl,
-  Platform,
   ActivityIndicator,
 } from 'react-native';
-import * as Sharing from 'expo-sharing';
-import * as WebBrowser from 'expo-web-browser';
 import { Asset } from 'expo-asset';
 import { Ionicons } from '@expo/vector-icons';
+import { useNavigation } from '@react-navigation/native';
 
 type RemoteItem = {
   name: string;
@@ -67,6 +65,7 @@ function titleFromFilename(filename: string) {
 const isHttpUrl = (u?: string) => !!u && /^https?:\/\//i.test(u);
 
 const Nutrition = () => {
+  const navigation: any = useNavigation();
   const [query, setQuery] = useState('');
   const [items, setItems] = useState<MealPlan[] | null>(null);
   const [refreshing, setRefreshing] = useState(false);
@@ -135,17 +134,10 @@ const Nutrition = () => {
     });
   }, [items, query]);
 
-  const openInBrowser = async (url: string) => {
-    if (!url) return Alert.alert('Error', 'File URL not available.');
-    try {
-      if (isHttpUrl(url)) {
-        await WebBrowser.openBrowserAsync(url);
-      } else {
-        await Sharing.shareAsync(url);
-      }
-    } catch {
-      Alert.alert('Error', 'Could not open the PDF.');
-    }
+  const openInApp = (item: MealPlan) => {
+    if (!item.url) return Alert.alert('Error', 'File URL not available.');
+    // Navigate to in-app PDF viewer; the viewer will handle local vs http and provide external open fallback
+    navigation.navigate('Pdf', { title: item.title, url: item.url });
   };
   // Note: Download & Share option removed. Tapping a card will directly open the PDF.
 
@@ -192,7 +184,7 @@ const Nutrition = () => {
         <TouchableOpacity
           key={`${item.filename}-${idx}`}
           style={styles.card}
-          onPress={() => openInBrowser(item.url)}
+          onPress={() => openInApp(item)}
           activeOpacity={0.8}
         >
           <Text style={styles.cardTitle}>{item.title}</Text>
