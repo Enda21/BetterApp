@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet, Dimensions, TouchableOpacity } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
-import { WebView } from 'react-native-webview';
+import YoutubePlayer from 'react-native-youtube-iframe';
 
 const { width } = Dimensions.get('window');
 
@@ -10,40 +10,15 @@ const LessonViewer: React.FC<any> = ({ route }: any) => {
   const navigation: any = useNavigation();
   const lesson = route?.params?.lesson ?? { title: 'No lesson', summary: '', videoUrl: '' };
 
-  // Normalize common YouTube watch URLs to embed URLs
-  let videoSrc = lesson.videoUrl || '';
-  if (/youtube\.com\/watch\?v=/.test(videoSrc)) {
-    videoSrc = videoSrc.replace('watch?v=', 'embed/');
-  }
-  if (/youtu\.be\//.test(videoSrc)) {
-    videoSrc = videoSrc.replace('youtu.be/', 'www.youtube.com/embed/');
-  }
+  // Extract YouTube video ID from various URL formats
+  const getYouTubeId = (url: string) => {
+    const match = url.match(
+      /(?:youtube\.com\/(?:watch\?v=|embed\/)|youtu\.be\/)([\w-]{11})/
+    );
+    return match ? match[1] : '';
+  };
+  const videoId = getYouTubeId(lesson.videoUrl || '');
 
-  // Basic HTML wrapper with a fullscreen-capable iframe and no scrollbars.
-  const html = `
-    <!doctype html>
-    <html>
-      <head>
-        <meta name="viewport" content="initial-scale=1.0, maximum-scale=1.0" />
-        <style>html,body{margin:0;padding:0;height:100%;overflow:hidden;background:#000}</style>
-      </head>
-      <body>
-        <iframe
-          src="${videoSrc}"
-          width="100%"
-          height="100%"
-          frameborder="0"
-          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-          allowfullscreen
-        ></iframe>
-      </body>
-    </html>
-  `;
-
-  // If the videoSrc is empty, show a small placeholder instead of trying to load an empty page.
-  const webviewSource = videoSrc ? { html } : { html: '<html><body><div style="padding:20px;font-size:16px">No video available.</div></body></html>' };
-
-  // For native smoother playback you can swap WebView for expo-av in future changes.
   return (
     <View style={styles.container}>
       <View style={styles.header}>
@@ -52,17 +27,17 @@ const LessonViewer: React.FC<any> = ({ route }: any) => {
       <View style={styles.body}>
         <Text style={styles.summary}>{lesson.summary}</Text>
         <View style={styles.videoContainer}>
-          <WebView
-            originWhitelist={["*"]}
-            source={webviewSource}
-            style={styles.webview}
-            javaScriptEnabled
-            domStorageEnabled
-            allowsFullscreenVideo
-            mediaPlaybackRequiresUserAction={false}
-            allowsInlineMediaPlayback
-            mixedContentMode="always"
-          />
+          {videoId ? (
+            <YoutubePlayer
+              height={(width * 9) / 16}
+              width={width}
+              videoId={videoId}
+              play={false}
+              webViewStyle={styles.webview}
+            />
+          ) : (
+            <View style={{padding:20}}><Text>No video available.</Text></View>
+          )}
         </View>
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
           <Text style={styles.backText}>‹ Back</Text>

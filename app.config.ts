@@ -11,7 +11,8 @@ export default {
     extra: {
       eas: {
         projectId: "4dc1c75e-9745-4348-90e7-2d5241a419e3", // <- from your screenshot
-      },
+      }
+      // Typeform Personal Access Token removed for security
     },
     ios: {
       bundleIdentifier: "com.brody32.better",

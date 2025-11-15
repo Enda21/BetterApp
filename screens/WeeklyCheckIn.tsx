@@ -1,5 +1,7 @@
-import React from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Linking } from 'react-native';
+import React, { useState } from 'react';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
+import FormWebView from './FormWebView';
+import ProgressPitStop from './ProgressPitStop';
 
 const forms = [
   {
@@ -15,6 +17,23 @@ const forms = [
 ];
 
 const WeeklyCheckIn = () => {
+  const [showRapidFire, setShowRapidFire] = useState(false);
+  const [showProgressPitStop, setShowProgressPitStop] = useState(false);
+
+  if (showRapidFire) {
+    return (
+      <FormWebView
+        url={'https://kmfitnesscoaching.typeform.com/Rapidfire'}
+        title={'Rapid Fire'}
+        onClose={() => setShowRapidFire(false)}
+      />
+    );
+  }
+
+  if (showProgressPitStop) {
+    return <ProgressPitStop onClose={() => setShowProgressPitStop(false)} />;
+  }
+
   return (
     <ScrollView style={styles.container}>
       <View style={styles.header}>
@@ -27,7 +46,13 @@ const WeeklyCheckIn = () => {
           <TouchableOpacity
             key={index}
             style={styles.card}
-            onPress={() => Linking.openURL(form.linkGoogleForm)}
+            onPress={() => {
+              if (form.name === 'Rapid Fire') {
+                setShowRapidFire(true);
+              } else if (form.name === 'Progress Pit Stop') {
+                setShowProgressPitStop(true);
+              }
+            }}
           >
             <Text style={styles.cardTitle}>{form.name}</Text>
             <Text style={styles.cardDescription}>{form.description}</Text>
