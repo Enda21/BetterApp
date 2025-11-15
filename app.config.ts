@@ -6,7 +6,7 @@ export default {
     name: "Better",
     slug: "betterapp",
     owner: "brody32", // optional but recommended
-    version: "1.0.0",
+    version: "1.1.0",
     icon: "./assets/BetterLogo2.png",
     extra: {
       eas: {
@@ -16,7 +16,7 @@ export default {
     },
     ios: {
       bundleIdentifier: "com.brody32.better",
-      buildNumber: "1.0.3",
+      buildNumber: "1.0.4",
       infoPlist: {
         LSApplicationQueriesSchemes: ["truecoach"],
         ITSAppUsesNonExemptEncryption: false,
@@ -26,7 +26,7 @@ export default {
     },
     android: {
       package: "com.brody32.better",
-      versionCode: 4,
+      versionCode: 5,
       Permissions: [],
        foregroundImage: "./assets/adaptive-icon.png", // transparent PNG
         backgroundColor: "#FFFFFF",
