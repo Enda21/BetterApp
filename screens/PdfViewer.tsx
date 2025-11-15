@@ -21,12 +21,14 @@ const PdfViewer: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Use Google Docs Viewer for remote PDFs to maximize Android support
+  // Use Mozilla PDF.js Viewer for remote PDFs to avoid Google Docs size limits (~20-25MB)
   const viewerUri = useMemo(() => {
     if (!url) return '';
     if (isHttpUrl(url)) {
       const enc = encodeURIComponent(url);
-      return `https://docs.google.com/gview?embedded=1&url=${enc}`;
+      // PDF.js official demo viewer supports larger files and works well in WebView
+      // We prefer this over Google Docs Viewer to support files >20MB
+      return `https://mozilla.github.io/pdf.js/web/viewer.html?file=${enc}`;
     }
     // Local file URI; iOS WebView often handles this directly. Android typically cannot render PDFs natively.
     return url;
@@ -66,8 +68,15 @@ const PdfViewer: React.FC = () => {
           originWhitelist={["*"]}
           source={{ uri: viewerUri }}
           style={styles.webview}
+          javaScriptEnabled
+          domStorageEnabled
+          cacheEnabled={false}
           onLoadStart={() => { setLoading(true); setError(null); }}
           onLoadEnd={() => setLoading(false)}
+          onHttpError={() => {
+            setLoading(false);
+            setError('Could not load the document preview.');
+          }}
           onError={() => {
             setLoading(false);
             setError('Could not load the document preview.');
