@@ -15,6 +15,14 @@
       "autoIncrement": true,
       "android": { "buildType": "app-bundle" }
     },
+    "ios-clear": {
+      "ios": {
+        "image": "latest"
+      },
+      "cache": {
+        "disabled": true
+      }
+    },
     "apk": {
       "android": { "buildType": "apk" }
     }

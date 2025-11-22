@@ -1,5 +1,5 @@
-import { ConfigPlugin, withAndroidManifest } from "@expo/config-plugins";
-import { version } from "react";
+// Note: no custom config plugins are used directly here; remove unused imports to avoid confusion during tooling
+
 
 export default {
   expo: {
@@ -34,13 +34,14 @@ export default {
         monochromeImage: "./assets/adaptive-icon-mono.png"
     },
     plugins: [
+      "expo-font",
       ["./plugins/with-truecoach-queries.js",{ 
         scheme: "truecoach", 
         androidPackages: [
           "co.truecoach.client",     // Production client app
           "co.truecoach.client.beta", // Beta client app (likely what you have)
           "com.truecoach.client",    // Alternative package name
-          "com.truecoach.beta",      // Coach app (harmless to include
+          "com.truecoach.beta",      // Coach app (harmless to include)
         ]
     }],
   ],
