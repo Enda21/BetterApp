@@ -16,7 +16,7 @@ export default {
     },
     ios: {
       bundleIdentifier: "com.brody32.better",
-      buildNumber: "1.0.4",
+      buildNumber: "1.0.5",
       infoPlist: {
         LSApplicationQueriesSchemes: ["truecoach"],
         ITSAppUsesNonExemptEncryption: false,
