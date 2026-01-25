@@ -107,24 +107,6 @@ export default function Podcasts() {
     }
   };
 
-  const scrollToTop = () => {
-    flatListRef.current?.scrollToOffset({ offset: 0, animated: true });
-  };
-
-  const scrollToBottom = () => {
-    if (filteredEpisodes.length > 0) {
-      flatListRef.current?.scrollToEnd({ animated: true });
-    }
-  };
-
-
-
-  const stopScrolling = () => {
-    if (scrollIntervalRef.current) {
-      clearInterval(scrollIntervalRef.current);
-      scrollIntervalRef.current = null;
-    }
-  };
 
   const playEpisode = async (episode: Episode) => {
     try {
