@@ -9,7 +9,7 @@ import { Ionicons, MaterialCommunityIcons, Feather } from '@expo/vector-icons';
 
 import Home from './screens/Home';
 import Courses from './screens/Courses';
-import ExternalLinks from './screens/ExternalLinks';
+import CoachBooking from './screens/CoachBooking';
 import WeeklyCheckIn from './screens/WeeklyCheckIn';
 import ReportIssue from './screens/ReportIssue';
 import Nutrition from './screens/Nutrition';
@@ -17,6 +17,7 @@ import OpenTrueCoachInApp from './screens/OpenTrueCoachInApp';
 import LessonViewer from './screens/LessonViewer';
 import Podcasts from './screens/Podcasts';
 import PdfViewer from './screens/PdfViewer';
+import Community from './screens/Community';
 
 
 const Tab = createBottomTabNavigator();
@@ -46,32 +47,38 @@ function MainTabs() {
             );
           } else if (route.name === 'Courses') {
             return <Ionicons name="book-outline" size={size} color={color} />;
-          } else if (route.name === 'External Links') {
-            return <Feather name="link" size={size} color={color} />;
+          } else if (route.name === 'Book a Call') {
+            return <Ionicons name="calendar-outline" size={size} color={color} />;
           } else if (route.name === 'Check In') {
             return <MaterialCommunityIcons name="target" size={size} color={color} />;
           } else if (route.name === 'Nutrition') {
             return <MaterialCommunityIcons name="food-variant" size={size} color={color} />;
           } else if (route.name === 'TrueCoach') {
             return <MaterialCommunityIcons name="dumbbell" size={size} color={color} />;
-          }
-          else if (route.name === 'Podcasts') {
+          } else if (route.name === 'Podcasts') {
             return <Ionicons name="musical-notes-outline" size={size} color={color} />;
+          } else if (route.name === 'Community') {
+            return <Ionicons name="people-outline" size={size} color={color} />;
           }
           return null;
         },
         tabBarActiveTintColor: '#4B3BE7',
         tabBarInactiveTintColor: 'gray',
         headerShown: false,
+        tabBarLabelStyle: {
+          fontSize: 7,
+          paddingBottom: 2,
+        },
       })}
     >
       <Tab.Screen name="Home" component={HomeStackScreen} />
       <Tab.Screen name="TrueCoach" component={OpenTrueCoachInApp} />
       <Tab.Screen name="Courses" component={Courses} />
-  <Tab.Screen name="Podcasts" component={Podcasts} />
+      <Tab.Screen name="Podcasts" component={Podcasts} />
+      <Tab.Screen name="Community" component={Community} />
       <Tab.Screen name="Check In" component={WeeklyCheckIn} />
       <Tab.Screen name="Nutrition" component={Nutrition} />
-      <Tab.Screen name="External Links" component={ExternalLinks} />
+      <Tab.Screen name="Book a Call" component={CoachBooking} />
     </Tab.Navigator>
   );
 }

@@ -73,18 +73,18 @@ const styles = StyleSheet.create({
     paddingBottom: 30,
     paddingHorizontal: 20,
     alignItems: 'center',
-    backgroundColor: '#0947aaff',
+    backgroundColor: '#F1EFE7',
   },
   headerTitle: {
     fontSize: 24,
     fontWeight: '700',
-    color: '#FFFFFF',
+    color: '#1A1A1A',
     textAlign: 'center',
     marginBottom: 10,
   },
   headerSubtitle: {
     fontSize: 16,
-    color: '#FFFFFF',
+    color: '#1A1A1A',
     textAlign: 'center',
   },
   content: {

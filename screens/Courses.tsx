@@ -184,7 +184,7 @@ const Courses = () => {
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>New Member Launch Pad</Text>
+        <Text style={styles.headerTitle}>Courses</Text>
       </View>
       <View style={styles.content}>
         {error ? (
@@ -243,17 +243,17 @@ const styles = StyleSheet.create({
     backgroundColor: '#F1EFE7',
   },
   header: {
-    backgroundColor: '#0947aaff',
+    backgroundColor: '#F1EFE7',
     paddingTop: 60,
     paddingBottom: 20,
     paddingHorizontal: 20,
     borderBottomWidth: 1,
-    borderBottomColor: '#1E293B',
+    borderBottomColor: '#ddd',
   },
   headerTitle: {
     fontSize: 24,
     fontWeight: '700',
-    color: '#FFFFFF',
+    color: '#1A1A1A',
   },
   content: {
     flex: 1,
