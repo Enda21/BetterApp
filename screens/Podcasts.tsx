@@ -45,12 +45,17 @@ export default function Podcasts() {
       if (scrollIntervalRef.current) {
         clearInterval(scrollIntervalRef.current);
       }
-      // Clean up sound on unmount
+    };
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      // Clean up sound on unmount or when sound changes
       if (sound) {
         sound.unloadAsync();
       }
     };
-  }, []);
+  }, [sound]);
 
   useEffect(() => {
     if (searchQuery.trim()) {
@@ -112,22 +117,7 @@ export default function Podcasts() {
     }
   };
 
-  const startScrolling = (direction: 'up' | 'down') => {
-    // Clear any existing interval
-    if (scrollIntervalRef.current) {
-      clearInterval(scrollIntervalRef.current);
-    }
 
-    // Start continuous scrolling
-    scrollIntervalRef.current = setInterval(() => {
-      const scrollAmount = direction === 'up' ? -50 : 50;
-      currentOffsetRef.current = Math.max(0, currentOffsetRef.current + scrollAmount);
-      flatListRef.current?.scrollToOffset({ 
-        offset: currentOffsetRef.current, 
-        animated: false 
-      });
-    }, 50);
-  };
 
   const stopScrolling = () => {
     if (scrollIntervalRef.current) {
@@ -576,12 +566,12 @@ const styles = StyleSheet.create({
     marginTop: 8,
     gap: 6,
     flexWrap: 'wrap',
+  },
   controlButton: {
     backgroundColor: '#f0f0f0',
     paddingVertical: 6,
     paddingHorizontal: 10,
     borderRadius: 6,
-  },borderRadius: 6,
   },
   controlButtonText: {
     fontSize: 12,
