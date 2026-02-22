@@ -8,11 +8,10 @@ type Coach = {
 };
 
 const coaches: Coach[] = [
-  { name: 'Enda', calendlyUrl: 'https://calendly.com/endabrody' },
-  { name: 'Kieran', calendlyUrl: 'https://calendly.com/kieran-kmfitness' },
-  { name: 'Paul', calendlyUrl: 'https://calendly.com/paul-kmfitness' },
-  { name: 'Owen', calendlyUrl: 'https://calendly.com/owen-kmfitness' },
-  { name: 'Tomas', calendlyUrl: 'https://calendly.com/tomas-kmfitness' },
+  { name: 'Kieran', calendlyUrl: 'https://calendly.com/kmfitness' },
+  { name: 'Paul', calendlyUrl: 'https://calendly.com/paulhogben23' },
+  { name: 'Owen', calendlyUrl: 'https://calendly.com/owencostel' },
+  { name: 'Tomas', calendlyUrl: 'https://calendly.com/oshea-tos' },
 ];
 
 const CoachBooking = () => {

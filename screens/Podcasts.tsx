@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useRef, useMemo, useCallback } from 'react';
 import { View, Text, StyleSheet, TextInput, TouchableOpacity, FlatList, ActivityIndicator, Image } from 'react-native';
 import { WebView } from 'react-native-webview';
-import { Audio } from 'expo-av';
+import { Audio, AVPlaybackStatus } from 'expo-av';
 import Slider from '@react-native-community/slider';
 
 type Episode = {
@@ -26,9 +26,24 @@ export default function Podcasts() {
   const [playbackDuration, setPlaybackDuration] = useState(0);
   const [playbackRate, setPlaybackRate] = useState(1.0);
   const [isBuffering, setIsBuffering] = useState(false);
+  const [connectionIssue, setConnectionIssue] = useState<string | null>(null);
+  const [isReconnecting, setIsReconnecting] = useState(false);
+  const [retryAttempt, setRetryAttempt] = useState(0);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const [refreshKey, setRefreshKey] = useState(0);
   const flatListRef = useRef<FlatList>(null);
   const scrollIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const currentOffsetRef = useRef(0);
+  const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const bufferingWatchdogRef = useRef<NodeJS.Timeout | null>(null);
+  const currentEpisodeRef = useRef<Episode | null>(null);
+  const playbackPositionRef = useRef(0);
+  const retryAttemptRef = useRef(0);
+  const userPausedRef = useRef(false);
+
+  const MAX_RECONNECT_ATTEMPTS = 5;
+  const BUFFERING_TIMEOUT_MS = 12000;
+  const BASE_RETRY_DELAY_MS = 1000;
 
   useEffect(() => {
     fetchEpisodes();
@@ -69,6 +84,183 @@ export default function Podcasts() {
     }
   }, [searchQuery, episodes]);
 
+  const clearReconnectTimer = () => {
+    if (reconnectTimeoutRef.current) {
+      clearTimeout(reconnectTimeoutRef.current);
+      reconnectTimeoutRef.current = null;
+    }
+  };
+
+  const clearBufferingWatchdog = () => {
+    if (bufferingWatchdogRef.current) {
+      clearTimeout(bufferingWatchdogRef.current);
+      bufferingWatchdogRef.current = null;
+    }
+  };
+
+  const setRetryAttemptValue = (value: number) => {
+    retryAttemptRef.current = value;
+    setRetryAttempt(value);
+  };
+
+  const playEpisode = async (episode: Episode, options?: { startPosition?: number; isReconnect?: boolean }) => {
+    try {
+      if (!options?.isReconnect && sound) {
+        await sound.unloadAsync();
+        setSound(null);
+      }
+
+      if (!options?.isReconnect && playingEpisodeId === episode.id) {
+        currentEpisodeRef.current = null;
+        setPlayingEpisodeId(null);
+        setPlaybackPosition(0);
+        playbackPositionRef.current = 0;
+        setPlaybackDuration(0);
+        setConnectionIssue(null);
+        setIsReconnecting(false);
+        clearReconnectTimer();
+        clearBufferingWatchdog();
+        setRetryAttemptValue(0);
+        return;
+      }
+
+      if (episode.audio_url) {
+        setIsBuffering(true);
+        const { sound: newSound } = await Audio.Sound.createAsync(
+          { uri: episode.audio_url },
+          {
+            shouldPlay: true,
+            rate: playbackRate,
+            positionMillis: options?.startPosition ?? 0,
+          }
+        );
+
+        if (sound && options?.isReconnect) {
+          await sound.unloadAsync();
+        }
+
+        setSound(newSound);
+        setPlayingEpisodeId(episode.id);
+        currentEpisodeRef.current = episode;
+        userPausedRef.current = false;
+        setIsPlaying(true);
+        setIsBuffering(false);
+        setConnectionIssue(null);
+        setIsReconnecting(false);
+        clearReconnectTimer();
+        clearBufferingWatchdog();
+        setRetryAttemptValue(0);
+
+        newSound.setOnPlaybackStatusUpdate((status: AVPlaybackStatus) => {
+          if (status.isLoaded) {
+            setPlaybackPosition(status.positionMillis);
+            playbackPositionRef.current = status.positionMillis;
+            setPlaybackDuration(status.durationMillis || 0);
+            setIsBuffering(status.isBuffering);
+            setIsPlaying(status.isPlaying);
+
+            if (status.isPlaying && !status.isBuffering) {
+              clearBufferingWatchdog();
+            }
+
+            if (status.isPlaying && status.isBuffering && !bufferingWatchdogRef.current) {
+              bufferingWatchdogRef.current = setTimeout(() => {
+                if (currentEpisodeRef.current && !userPausedRef.current) {
+                  const nextAttempt = retryAttemptRef.current + 1;
+                  if (nextAttempt > MAX_RECONNECT_ATTEMPTS) {
+                    setIsReconnecting(false);
+                    setConnectionIssue('Connection issue persists. Tap Reconnect to try again.');
+                    return;
+                  }
+
+                  setRetryAttemptValue(nextAttempt);
+                  const delay = Math.min(BASE_RETRY_DELAY_MS * Math.pow(2, nextAttempt - 1), 30000);
+                  setIsReconnecting(true);
+                  setConnectionIssue(`Connection stalled. Reconnecting (${nextAttempt}/${MAX_RECONNECT_ATTEMPTS})...`);
+                  clearReconnectTimer();
+                  reconnectTimeoutRef.current = setTimeout(() => {
+                    if (currentEpisodeRef.current?.audio_url) {
+                      playEpisode(currentEpisodeRef.current, {
+                        startPosition: playbackPositionRef.current,
+                        isReconnect: true,
+                      });
+                    }
+                  }, delay);
+                }
+              }, BUFFERING_TIMEOUT_MS);
+            }
+
+            if (status.didJustFinish) {
+              currentEpisodeRef.current = null;
+              userPausedRef.current = false;
+              clearReconnectTimer();
+              clearBufferingWatchdog();
+              setConnectionIssue(null);
+              setIsReconnecting(false);
+              setRetryAttemptValue(0);
+              setPlayingEpisodeId(null);
+              setIsPlaying(false);
+              setPlaybackPosition(0);
+              playbackPositionRef.current = 0;
+            }
+          } else {
+            clearBufferingWatchdog();
+
+            if (status.error && currentEpisodeRef.current && !userPausedRef.current) {
+              const nextAttempt = retryAttemptRef.current + 1;
+              if (nextAttempt > MAX_RECONNECT_ATTEMPTS) {
+                setIsReconnecting(false);
+                setConnectionIssue('Playback failed after retries. Tap Reconnect to continue.');
+                return;
+              }
+
+              setRetryAttemptValue(nextAttempt);
+              const delay = Math.min(BASE_RETRY_DELAY_MS * Math.pow(2, nextAttempt - 1), 30000);
+              setIsReconnecting(true);
+              setConnectionIssue(`Playback interrupted. Reconnecting (${nextAttempt}/${MAX_RECONNECT_ATTEMPTS})...`);
+              clearReconnectTimer();
+              reconnectTimeoutRef.current = setTimeout(() => {
+                if (currentEpisodeRef.current?.audio_url) {
+                  playEpisode(currentEpisodeRef.current, {
+                    startPosition: playbackPositionRef.current,
+                    isReconnect: true,
+                  });
+                }
+              }, delay);
+            }
+          }
+        });
+      }
+    } catch (err) {
+      console.error('Error playing episode:', err);
+      setIsBuffering(false);
+
+      if (currentEpisodeRef.current && !userPausedRef.current) {
+        const nextAttempt = retryAttemptRef.current + 1;
+        if (nextAttempt <= MAX_RECONNECT_ATTEMPTS) {
+          setRetryAttemptValue(nextAttempt);
+          const delay = Math.min(BASE_RETRY_DELAY_MS * Math.pow(2, nextAttempt - 1), 30000);
+          setIsReconnecting(true);
+          setConnectionIssue(`Unable to stream. Reconnecting (${nextAttempt}/${MAX_RECONNECT_ATTEMPTS})...`);
+          clearReconnectTimer();
+          reconnectTimeoutRef.current = setTimeout(() => {
+            if (currentEpisodeRef.current?.audio_url) {
+              playEpisode(currentEpisodeRef.current, {
+                startPosition: playbackPositionRef.current,
+                isReconnect: true,
+              });
+            }
+          }, delay);
+        } else {
+          setIsReconnecting(false);
+          setConnectionIssue('Unable to reconnect. Tap Reconnect to try again.');
+        }
+      } else {
+        setPlayingEpisodeId(null);
+      }
+    }
+  };
+
   const fetchEpisodes = async () => {
     try {
       setLoading(true);
@@ -107,67 +299,64 @@ export default function Podcasts() {
     }
   };
 
+  const refreshScreen = async () => {
+    setIsRefreshing(true);
 
-  const playEpisode = async (episode: Episode) => {
     try {
-      // Stop current sound if playing
+      clearReconnectTimer();
+      clearBufferingWatchdog();
+      userPausedRef.current = false;
+      currentEpisodeRef.current = null;
+
       if (sound) {
         await sound.unloadAsync();
         setSound(null);
       }
 
-      // If clicking the same episode, just stop
-      if (playingEpisodeId === episode.id) {
-        setPlayingEpisodeId(null);
-        setPlaybackPosition(0);
-        setPlaybackDuration(0);
-        return;
-      }
-
-      // Load and play new episode
-      if (episode.audio_url) {
-        setIsBuffering(true);
-        const { sound: newSound } = await Audio.Sound.createAsync(
-          { uri: episode.audio_url },
-          { shouldPlay: true, rate: playbackRate }
-        );
-        setSound(newSound);
-        setPlayingEpisodeId(episode.id);
-        setIsPlaying(true);
-        setIsBuffering(false);
-
-        // Set up playback status update
-        newSound.setOnPlaybackStatusUpdate((status) => {
-          if (status.isLoaded) {
-            setPlaybackPosition(status.positionMillis);
-            setPlaybackDuration(status.durationMillis || 0);
-            setIsBuffering(status.isBuffering);
-            setIsPlaying(status.isPlaying);
-            
-            if (status.didJustFinish) {
-              setPlayingEpisodeId(null);
-              setIsPlaying(false);
-              setPlaybackPosition(0);
-            }
-          }
-        });
-      }
-    } catch (err) {
-      console.error('Error playing episode:', err);
       setPlayingEpisodeId(null);
+      setIsPlaying(false);
       setIsBuffering(false);
+      setPlaybackPosition(0);
+      playbackPositionRef.current = 0;
+      setPlaybackDuration(0);
+      setConnectionIssue(null);
+      setIsReconnecting(false);
+      setRetryAttemptValue(0);
+
+      await fetchEpisodes();
+      setRefreshKey((prev) => prev + 1);
+    } finally {
+      setIsRefreshing(false);
     }
   };
 
   const pauseEpisode = async () => {
     if (sound) {
+      userPausedRef.current = true;
+      clearReconnectTimer();
+      clearBufferingWatchdog();
+      setIsReconnecting(false);
+      setConnectionIssue(null);
       await sound.pauseAsync();
       setIsPlaying(false);
     }
   };
 
   const resumeEpisode = async () => {
+    if (currentEpisodeRef.current && connectionIssue) {
+      setConnectionIssue('Reconnecting...');
+      setIsReconnecting(true);
+      clearReconnectTimer();
+      clearBufferingWatchdog();
+      await playEpisode(currentEpisodeRef.current, {
+        startPosition: playbackPositionRef.current,
+        isReconnect: true,
+      });
+      return;
+    }
+
     if (sound) {
+      userPausedRef.current = false;
       await sound.playAsync();
       setIsPlaying(true);
     }
@@ -175,6 +364,7 @@ export default function Podcasts() {
 
   const seekTo = async (position: number) => {
     if (sound) {
+      playbackPositionRef.current = position;
       await sound.setPositionAsync(position);
     }
   };
@@ -201,12 +391,31 @@ export default function Podcasts() {
     }
   };
 
+  const reconnectCurrentEpisode = async () => {
+    if (!currentEpisodeRef.current) {
+      return;
+    }
+
+    userPausedRef.current = false;
+    setConnectionIssue('Reconnecting...');
+    setIsReconnecting(true);
+    clearReconnectTimer();
+    clearBufferingWatchdog();
+
+    await playEpisode(currentEpisodeRef.current, {
+      startPosition: playbackPositionRef.current,
+      isReconnect: true,
+    });
+  };
+
   useEffect(() => {
     // Cleanup on unmount
     return () => {
       if (scrollIntervalRef.current) {
         clearInterval(scrollIntervalRef.current);
       }
+      clearReconnectTimer();
+      clearBufferingWatchdog();
       if (sound) {
         sound.unloadAsync();
       }
@@ -325,6 +534,20 @@ export default function Podcasts() {
                     <Text style={styles.controlButtonText}>⏩ 30s</Text>
                   </TouchableOpacity>
                 </View>
+
+                {connectionIssue && (
+                  <View style={styles.reconnectContainer}>
+                    <Text style={styles.connectionIssueText}>{connectionIssue}</Text>
+                    <TouchableOpacity
+                      style={styles.reconnectButton}
+                      onPress={reconnectCurrentEpisode}
+                    >
+                      <Text style={styles.reconnectButtonText}>
+                        {isReconnecting ? `Retrying... (${retryAttempt}/${MAX_RECONNECT_ATTEMPTS})` : 'Reconnect'}
+                      </Text>
+                    </TouchableOpacity>
+                  </View>
+                )}
               </View>
             )}
           </View>
@@ -332,7 +555,7 @@ export default function Podcasts() {
         </View>
       </View>
     );
-  }, [playingEpisodeId, isPlaying, isBuffering, playbackPosition, playbackDuration, playbackRate, pauseEpisode, resumeEpisode, playEpisode, seekTo, rewindTenSeconds, skipThirtySeconds, changePlaybackSpeed]);
+  }, [playingEpisodeId, isPlaying, isBuffering, playbackPosition, playbackDuration, playbackRate, pauseEpisode, resumeEpisode, playEpisode, seekTo, rewindTenSeconds, skipThirtySeconds, changePlaybackSpeed, connectionIssue, isReconnecting, retryAttempt]);
 
   const renderHeader = useMemo(() => (
     <>
@@ -342,6 +565,7 @@ export default function Podcasts() {
       <Text style={styles.sectionHeader}>Latest Episode</Text>
       <View style={styles.webviewContainer}>
         <WebView
+          key={`latest-episode-${refreshKey}`}
           source={{ uri: 'https://share.transistor.fm/e/the-unstoppable-male-academy-private-channel/latest' }}
           style={{ height: 180, width: '100%' }}
           scrollEnabled={false}
@@ -381,19 +605,30 @@ export default function Podcasts() {
         )}
       </View>
     </>
-  ), [loading, error, filteredEpisodes.length, searchQuery, fetchEpisodes]);
+  ), [loading, error, filteredEpisodes.length, searchQuery, fetchEpisodes, refreshKey]);
 
   return (
     <View style={styles.container}>
       {/* Search Field at Top */}
       <View style={styles.topSearchContainer}>
-        <TextInput
-          style={styles.searchInput}
-          placeholder="Search episodes..."
-          placeholderTextColor="#999"
-          value={searchQuery}
-          onChangeText={setSearchQuery}
-        />
+        <View style={styles.topSearchRow}>
+          <TextInput
+            style={[styles.searchInput, styles.searchInputFlex]}
+            placeholder="Search episodes..."
+            placeholderTextColor="#999"
+            value={searchQuery}
+            onChangeText={setSearchQuery}
+          />
+          <TouchableOpacity
+            style={styles.refreshScreenButton}
+            onPress={refreshScreen}
+            disabled={isRefreshing}
+          >
+            <Text style={styles.refreshScreenButtonText}>
+              {isRefreshing ? 'Refreshing...' : 'Refresh'}
+            </Text>
+          </TouchableOpacity>
+        </View>
       </View>
 
       <FlatList
@@ -429,6 +664,11 @@ const styles = StyleSheet.create({
     backgroundColor: '#F1EFE7',
     zIndex: 10,
   },
+  topSearchRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
   header: { fontSize: 20, fontWeight: 'bold', marginBottom: 16, color: '#1A1A1A', textAlign: 'center', marginTop: 16 },
   sectionHeader: { fontSize: 18, fontWeight: 'bold', marginBottom: 12, color: '#1A1A1A', textAlign: 'center', marginTop: 8 },
   webviewContainer: { width: '100%', maxWidth: 640, marginBottom: 16, alignSelf: 'center' },
@@ -455,6 +695,22 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 4,
     elevation: 3,
+  },
+  searchInputFlex: {
+    flex: 1,
+  },
+  refreshScreenButton: {
+    backgroundColor: '#4B3BE7',
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    borderRadius: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  refreshScreenButtonText: {
+    color: '#fff',
+    fontWeight: '700',
+    fontSize: 13,
   },
   episodeCard: {
     backgroundColor: '#F8F8F8',
@@ -614,5 +870,28 @@ const styles = StyleSheet.create({
   retryButtonText: {
     color: '#fff',
     fontWeight: 'bold',
+  },
+  reconnectContainer: {
+    marginTop: 10,
+    gap: 8,
+    backgroundColor: '#f4f1ff',
+    borderRadius: 8,
+    padding: 10,
+  },
+  connectionIssueText: {
+    fontSize: 12,
+    color: '#4A3B96',
+  },
+  reconnectButton: {
+    backgroundColor: '#4B3BE7',
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    borderRadius: 6,
+    alignSelf: 'flex-start',
+  },
+  reconnectButtonText: {
+    color: '#fff',
+    fontWeight: '700',
+    fontSize: 12,
   },
 });
