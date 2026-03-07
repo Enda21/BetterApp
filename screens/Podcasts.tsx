@@ -535,6 +535,12 @@ export default function Podcasts() {
                   </TouchableOpacity>
                 </View>
 
+                {isBuffering && isCurrentEpisode && !connectionIssue && (
+                  <View style={styles.bufferingContainer}>
+                    <ActivityIndicator size="small" color="#4B3BE7" />
+                    <Text style={styles.bufferingText}>Buffering…</Text>
+                  </View>
+                )}
                 {connectionIssue && (
                   <View style={styles.reconnectContainer}>
                     <Text style={styles.connectionIssueText}>{connectionIssue}</Text>
@@ -870,6 +876,17 @@ const styles = StyleSheet.create({
   retryButtonText: {
     color: '#fff',
     fontWeight: 'bold',
+  },
+  bufferingContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginTop: 10,
+    paddingVertical: 6,
+  },
+  bufferingText: {
+    fontSize: 13,
+    color: '#666',
   },
   reconnectContainer: {
     marginTop: 10,
