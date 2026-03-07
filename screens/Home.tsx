@@ -2,6 +2,7 @@ import React from 'react';
 import { useNavigation, NavigationProp } from '@react-navigation/native';
 import { TouchableOpacity } from 'react-native';
 import { View, Text, StyleSheet, Image } from 'react-native';
+import Constants from 'expo-constants';
 
 // Define your stack param list type
 type RootStackParamList = {
@@ -19,6 +20,8 @@ const Home = () => {
       <TouchableOpacity style={styles.reportButton} onPress={() => navigation.navigate('ReportIssue')}>
         <Text style={styles.reportText}>Report Issue</Text>
       </TouchableOpacity>
+
+      <Text style={styles.version}>v{Constants.expoConfig?.version ?? '1.0.0'}</Text>
     </View>
   );
 };
@@ -53,5 +56,10 @@ reportText: {
   color: '#fff',
   fontWeight: 'bold',
   fontSize: 16,
+},
+version: {
+  marginTop: 24,
+  fontSize: 12,
+  color: '#6B7280',
 },
 });
