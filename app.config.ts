@@ -20,7 +20,8 @@ export default {
       infoPlist: {
         LSApplicationQueriesSchemes: ["truecoach"],
         ITSAppUsesNonExemptEncryption: false,
-        NSPhotoLibraryUsageDescription: "Allow Better to access your photos so you can attach screenshots when reporting an issue."
+        NSPhotoLibraryUsageDescription: "Allow Better to access your photos so you can attach screenshots when reporting an issue.",
+        UIBackgroundModes: ["audio"],
       },
        icon: "./assets/BetterLogo2.png"
     },

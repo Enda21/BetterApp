@@ -1,6 +1,5 @@
 import React, { useEffect, useState, useRef, useMemo, useCallback } from 'react';
-import { View, Text, StyleSheet, TextInput, TouchableOpacity, FlatList, ActivityIndicator, Image } from 'react-native';
-import { WebView } from 'react-native-webview';
+import { View, Text, StyleSheet, TextInput, TouchableOpacity, FlatList, ActivityIndicator, Image, AppState, AppStateStatus } from 'react-native';
 import { Audio, AVPlaybackStatus } from 'expo-av';
 import Slider from '@react-native-community/slider';
 
@@ -40,6 +39,8 @@ export default function Podcasts() {
   const playbackPositionRef = useRef(0);
   const retryAttemptRef = useRef(0);
   const userPausedRef = useRef(false);
+  const playEpisodeRef = useRef<((ep: Episode, opts?: { startPosition?: number; isReconnect?: boolean }) => Promise<void>) | null>(null);
+  const soundRef = useRef<Audio.Sound | null>(null);
 
   const MAX_RECONNECT_ATTEMPTS = 5;
   const BUFFERING_TIMEOUT_MS = 12000;
@@ -260,6 +261,38 @@ export default function Podcasts() {
       }
     }
   };
+  playEpisodeRef.current = playEpisode;
+
+  // Keep soundRef in sync so AppState handler can check status
+  useEffect(() => {
+    soundRef.current = sound;
+  }, [sound]);
+
+  // When app returns to foreground (e.g. user unlocks device), immediately kick off buffer/reconnect
+  // if the stream is stalled — so buffering starts right away instead of waiting for next status update
+  useEffect(() => {
+    const subscription = AppState.addEventListener('change', async (nextState: AppStateStatus) => {
+      if (nextState !== 'active') return;
+      const ep = currentEpisodeRef.current;
+      if (!ep?.audio_url || userPausedRef.current) return;
+      const s = soundRef.current;
+      if (s) {
+        try {
+          const status = await s.getStatusAsync();
+          if (status.isLoaded && status.isPlaying && !status.isBuffering) return; // playing fine, no action
+        } catch {
+          // getStatusAsync failed, assume we need to reconnect
+        }
+      }
+      clearReconnectTimer();
+      clearBufferingWatchdog();
+      playEpisodeRef.current?.(ep, {
+        startPosition: playbackPositionRef.current,
+        isReconnect: true,
+      });
+    });
+    return () => subscription.remove();
+  }, []);
 
   const fetchEpisodes = async () => {
     try {
@@ -569,19 +602,107 @@ export default function Podcasts() {
 
       {/* Latest Episode */}
       <Text style={styles.sectionHeader}>Latest Episode</Text>
-      <View style={styles.webviewContainer}>
-        <WebView
-          key={`latest-episode-${refreshKey}`}
-          source={{ uri: 'https://share.transistor.fm/e/the-unstoppable-male-academy-private-channel/latest' }}
-          style={{ height: 180, width: '100%' }}
-          scrollEnabled={false}
-          javaScriptEnabled={true}
-          androidLayerType="hardware"
-          androidHardwareAccelerationDisabled={false}
-          renderLoading={() => <ActivityIndicator size="small" color="#4B3BE7" />}
-          startInLoadingState={true}
-        />
-      </View>
+      {episodes.length > 0 && (() => {
+        const latestEpisode = episodes[0];
+        const isCurrentEpisode = playingEpisodeId === latestEpisode.id;
+        const cleanDescription = latestEpisode.description ? stripHtml(latestEpisode.description) : '';
+        return (
+          <View style={styles.latestEpisodeContainer}>
+            <View style={styles.episodeCard}>
+              <Image
+                source={require('../assets/KMFpODCAST.png')}
+                style={styles.episodeLogo}
+                resizeMode="contain"
+              />
+              <View style={styles.episodeContent}>
+                <Text style={styles.episodeTitle}>{latestEpisode.title}</Text>
+                {cleanDescription && (
+                  <Text style={styles.episodeDescription} numberOfLines={2}>
+                    {cleanDescription}
+                  </Text>
+                )}
+                <View style={styles.episodeMetaRow}>
+                  {latestEpisode.published_at && (
+                    <Text style={styles.episodeDate}>
+                      {new Date(latestEpisode.published_at).toLocaleDateString()}
+                    </Text>
+                  )}
+                  {latestEpisode.duration && (
+                    <Text style={styles.episodeDuration}>{latestEpisode.duration}</Text>
+                  )}
+                </View>
+                {latestEpisode.audio_url && (
+                  <View style={styles.playerContainer}>
+                    <TouchableOpacity
+                      style={styles.playButton}
+                      onPress={() => isPlaying ? pauseEpisode() : (isCurrentEpisode ? resumeEpisode() : playEpisode(latestEpisode))}
+                    >
+                      <Text style={styles.playButtonText}>
+                        {isBuffering && isCurrentEpisode ? '...' : (isPlaying ? '⏸' : '▶')}
+                      </Text>
+                    </TouchableOpacity>
+                    {isCurrentEpisode && (
+                      <View style={styles.timelineContainer}>
+                        <View style={styles.sliderRow}>
+                          <Text style={styles.timeText}>{formatTime(playbackPosition)}</Text>
+                          <Slider
+                            style={styles.slider}
+                            minimumValue={0}
+                            maximumValue={playbackDuration}
+                            value={playbackPosition}
+                            onSlidingComplete={(value) => seekTo(value)}
+                            minimumTrackTintColor="#4B3BE7"
+                            maximumTrackTintColor="#ddd"
+                            thumbTintColor="#4B3BE7"
+                          />
+                          <Text style={styles.timeText}>{formatTime(playbackDuration)}</Text>
+                        </View>
+                        <View style={styles.controlsRow}>
+                          <TouchableOpacity style={styles.controlButton} onPress={rewindTenSeconds}>
+                            <Text style={styles.controlButtonText}>⏪ 10s</Text>
+                          </TouchableOpacity>
+                          <View style={styles.speedControls}>
+                            {[1.0, 1.25, 1.5, 2.0].map((rate) => (
+                              <TouchableOpacity
+                                key={rate}
+                                style={[styles.speedButton, playbackRate === rate && styles.speedButtonActive]}
+                                onPress={() => changePlaybackSpeed(rate)}
+                              >
+                                <Text style={[styles.speedButtonText, playbackRate === rate && styles.speedButtonTextActive]}>
+                                  {rate}x
+                                </Text>
+                              </TouchableOpacity>
+                            ))}
+                          </View>
+                          <TouchableOpacity style={styles.controlButton} onPress={skipThirtySeconds}>
+                            <Text style={styles.controlButtonText}>⏩ 30s</Text>
+                          </TouchableOpacity>
+                        </View>
+                        {isBuffering && isCurrentEpisode && !connectionIssue && (
+                          <View style={styles.bufferingContainer}>
+                            <ActivityIndicator size="small" color="#4B3BE7" />
+                            <Text style={styles.bufferingText}>Buffering…</Text>
+                          </View>
+                        )}
+                        {connectionIssue && (
+                          <View style={styles.reconnectContainer}>
+                            <Text style={styles.connectionIssueText}>{connectionIssue}</Text>
+                            <TouchableOpacity style={styles.reconnectButton} onPress={reconnectCurrentEpisode}>
+                              <Text style={styles.reconnectButtonText}>
+                                {isReconnecting ? `Retrying... (${retryAttempt}/${MAX_RECONNECT_ATTEMPTS})` : 'Reconnect'}
+                              </Text>
+                            </TouchableOpacity>
+                          </View>
+                        )}
+                      </View>
+                    )}
+                  </View>
+                )}
+              </View>
+            </View>
+          </View>
+        );
+      })()}
 
       {/* All Episodes Section */}
       <View style={styles.allEpisodesContainer}>
@@ -611,7 +732,7 @@ export default function Podcasts() {
         )}
       </View>
     </>
-  ), [loading, error, filteredEpisodes.length, searchQuery, fetchEpisodes, refreshKey]);
+  ), [loading, error, filteredEpisodes.length, searchQuery, fetchEpisodes, refreshKey, episodes, playingEpisodeId, isPlaying, isBuffering, playbackPosition, playbackDuration, playbackRate, connectionIssue, isReconnecting, retryAttempt, pauseEpisode, resumeEpisode, playEpisode, seekTo, rewindTenSeconds, skipThirtySeconds, changePlaybackSpeed, reconnectCurrentEpisode]);
 
   return (
     <View style={styles.container}>
@@ -677,7 +798,7 @@ const styles = StyleSheet.create({
   },
   header: { fontSize: 20, fontWeight: 'bold', marginBottom: 16, color: '#1A1A1A', textAlign: 'center', marginTop: 16 },
   sectionHeader: { fontSize: 18, fontWeight: 'bold', marginBottom: 12, color: '#1A1A1A', textAlign: 'center', marginTop: 8 },
-  webviewContainer: { width: '100%', maxWidth: 640, marginBottom: 16, alignSelf: 'center' },
+  latestEpisodeContainer: { width: '100%', maxWidth: 640, marginBottom: 16, alignSelf: 'center', marginHorizontal: 0 },
   allEpisodesContainer: { 
     width: '100%', 
     maxWidth: 640, 
