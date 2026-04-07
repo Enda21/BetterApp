@@ -13,5 +13,5 @@ Add testers (email list / Google Groups) → Save → Roll out.
 
 # How to build IOs to go to Production
 In app.Config version Has to go up by 1 
-
+eas build --platform ios
 eas submit --platform ios
