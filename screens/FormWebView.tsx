@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, StyleSheet, TouchableOpacity, Text } from 'react-native';
+import { View, StyleSheet, TouchableOpacity, Text, SafeAreaView } from 'react-native';
 import { WebView } from 'react-native-webview';
 
 interface FormWebViewProps {
@@ -10,7 +10,7 @@ interface FormWebViewProps {
 
 const FormWebView = ({ url, onClose, title }: FormWebViewProps) => {
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container}>
       <View style={styles.header}>
         <TouchableOpacity onPress={onClose} style={styles.cancelButton}>
           <Text style={styles.cancelButtonText}>Cancel</Text>
@@ -18,9 +18,10 @@ const FormWebView = ({ url, onClose, title }: FormWebViewProps) => {
         <View style={styles.headerTitleContainer}>
           {title ? <Text style={styles.headerTitle}>{title}</Text> : null}
         </View>
+        <View style={styles.rightPlaceholder} />
       </View>
       <WebView source={{ uri: url }} style={styles.webview} />
-    </View>
+    </SafeAreaView>
   );
 };
 
@@ -30,15 +31,16 @@ const styles = StyleSheet.create({
     backgroundColor: '#F1EFE7',
   },
   header: {
-    height: 60,
+    minHeight: 56,
     backgroundColor: '#0947aaff',
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 16,
-    paddingTop: 20,
+    paddingTop: 18,
   },
   cancelButton: {
     padding: 8,
+    width: 80,
   },
   cancelButtonText: {
     color: '#FFFFFF',
@@ -49,6 +51,9 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  rightPlaceholder: {
+    width: 80,
   },
   headerTitle: {
     color: '#FFFFFF',

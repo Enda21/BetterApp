@@ -11,6 +11,7 @@ import {
   RefreshControl,
   ActivityIndicator,
 } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 
 const { width } = Dimensions.get('window');
@@ -185,6 +186,12 @@ const Courses = () => {
     <View style={styles.container}>
       <View style={styles.header}>
         <Text style={styles.headerTitle}>Courses</Text>
+        <TouchableOpacity
+          style={styles.refreshButton}
+          onPress={onRefresh}
+        >
+          <Ionicons name="refresh" size={24} color="#1A1A1A" />
+        </TouchableOpacity>
       </View>
       <View style={styles.content}>
         {error ? (
@@ -254,6 +261,12 @@ const styles = StyleSheet.create({
     fontSize: 24,
     fontWeight: '700',
     color: '#1A1A1A',
+  },
+  refreshButton: {
+    position: 'absolute',
+    right: 20,
+    top: 60,
+    padding: 4,
   },
   content: {
     flex: 1,

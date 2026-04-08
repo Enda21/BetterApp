@@ -781,7 +781,7 @@ export default function Podcasts() {
 
 const styles = StyleSheet.create({
   scrollContainer: { flexGrow: 1, paddingBottom: 20 },
-  container: { flex: 1, paddingHorizontal: 16, paddingTop: 16, backgroundColor: '#F1EFE7' },
+  container: { flex: 1, paddingHorizontal: 16, paddingTop: 50, backgroundColor: '#F1EFE7' },
   topSearchContainer: {
     width: '100%',
     maxWidth: 640,

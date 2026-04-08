@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, StyleSheet, TouchableOpacity, Text } from 'react-native';
+import { View, StyleSheet, TouchableOpacity, Text, SafeAreaView } from 'react-native';
 import { WebView } from 'react-native-webview';
 
 interface RapidFireProps {
@@ -8,7 +8,7 @@ interface RapidFireProps {
 
 const RapidFire = ({ onClose }: RapidFireProps) => {
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container}>
       <View style={styles.header}>
         <TouchableOpacity onPress={onClose} style={styles.cancelButton}>
           <Text style={styles.cancelButtonText}>Cancel</Text>
@@ -20,7 +20,7 @@ const RapidFire = ({ onClose }: RapidFireProps) => {
         source={{ uri: 'https://kmfitnesscoaching.typeform.com/Rapidfire' }}
         style={styles.webview}
       />
-    </View>
+    </SafeAreaView>
   );
 };
 
@@ -30,15 +30,16 @@ const styles = StyleSheet.create({
     backgroundColor: '#F1EFE7',
   },
   header: {
-    height: 60,
+    minHeight: 56,
     backgroundColor: '#0947aaff',
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 16,
-    paddingTop: 20,
+    paddingTop: 18,
   },
   cancelButton: {
     padding: 8,
+    width: 80,
   },
   cancelButtonText: {
     color: '#FFFFFF',
@@ -56,8 +57,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   rightPlaceholder: {
-    width: 30,
-    height: 30,
+    width: 80,
   },
 });
 

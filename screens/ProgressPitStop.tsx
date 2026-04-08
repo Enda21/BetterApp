@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, StyleSheet, TouchableOpacity, Text } from 'react-native';
+import { View, StyleSheet, TouchableOpacity, Text, SafeAreaView } from 'react-native';
 import { WebView } from 'react-native-webview';
 
 interface ProgressPitStopProps {
@@ -8,7 +8,7 @@ interface ProgressPitStopProps {
 
 const ProgressPitStop = ({ onClose }: ProgressPitStopProps) => {
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container}>
       <View style={styles.header}>
         <TouchableOpacity onPress={onClose} style={styles.cancelButton}>
           <Text style={styles.cancelButtonText}>Cancel</Text>
@@ -16,12 +16,13 @@ const ProgressPitStop = ({ onClose }: ProgressPitStopProps) => {
         <View style={styles.headerTitleContainer}>
           <Text style={styles.headerTitle}>Progress Pit Stop</Text>
         </View>
+        <View style={styles.rightPlaceholder} />
       </View>
       <WebView
         source={{ uri: 'https://kmfitnesscoaching.typeform.com/pitstopsessions' }}
         style={styles.webview}
       />
-    </View>
+    </SafeAreaView>
   );
 };
 
@@ -31,17 +32,16 @@ const styles = StyleSheet.create({
     backgroundColor: '#F1EFE7',
   },
   header: {
-    height: 60,
+    minHeight: 56,
     backgroundColor: '#0947aaff',
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 16,
-    paddingTop: 20,
-    justifyContent: 'space-between',
+    paddingTop: 18,
   },
   cancelButton: {
     padding: 8,
-    width: 80, // Fixed width for left and right elements
+    width: 80,
   },
   cancelButtonText: {
     color: '#FFFFFF',
@@ -52,6 +52,9 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  rightPlaceholder: {
+    width: 80,
   },
   headerTitle: {
     color: '#FFFFFF',
