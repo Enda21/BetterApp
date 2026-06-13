@@ -760,7 +760,7 @@ export default function Podcasts() {
 
       <FlatList
         ref={flatListRef}
-        data={!loading && !error && filteredEpisodes.length > 0 ? filteredEpisodes : []}
+        data={!loading && !error && filteredEpisodes.length > 0 ? (searchQuery ? filteredEpisodes : filteredEpisodes.slice(1)) : []}
         renderItem={renderEpisode}
         keyExtractor={(item) => item.id}
         ListHeaderComponent={renderHeader}
