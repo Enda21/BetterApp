@@ -37,6 +37,7 @@ function MainTabs() {
   return (
     <Tab.Navigator
       screenOptions={({ route }) => ({
+        detachInactiveScreens: false,
         tabBarIcon: ({ color, size }) => {
           if (route.name === 'Home') {
             return (

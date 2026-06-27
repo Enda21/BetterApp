@@ -1,0 +1,11 @@
+{
+  "latestVersion": "1.1.11",
+  "ios": {
+    "latestVersion": "1.1.11"
+  },
+  "android": {
+    "latestVersion": "1.1.11"
+  },
+  "iosStoreUrl": "https://apps.apple.com/search?term=Better+App",
+  "androidStoreUrl": "https://play.google.com/store/apps/details?id=com.brody32.better"
+}

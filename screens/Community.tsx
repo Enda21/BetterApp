@@ -1,33 +1,13 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Modal, Alert } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Modal } from 'react-native';
 import { WebView } from 'react-native-webview';
 import { Ionicons } from '@expo/vector-icons';
-import * as MailComposer from 'expo-mail-composer';
+import { requestSkoolAccountDeletionAfterModal } from '../utils/requestSkoolAccountDeletion';
 
 const SKOOL_COMMUNITY_URL = 'https://www.skool.com/be-a-a-better-man-5157';
 
 export default function Community() {
   const [showAccountMenu, setShowAccountMenu] = useState(false);
-
-  const requestAccountDeletion = async () => {
-    setShowAccountMenu(false);
-
-    const isAvailable = await MailComposer.isAvailableAsync();
-    if (!isAvailable) {
-      Alert.alert(
-        'Email Not Available',
-        'Please send an email to help@skool.com requesting account deletion.',
-        [{ text: 'OK' }]
-      );
-      return;
-    }
-
-    await MailComposer.composeAsync({
-      recipients: ['help@skool.com'],
-      subject: 'Account Deletion Request',
-      body: 'Hi Skool Support,\n\nI would like to request the complete deletion of my Skool account and all associated data.\n\nThank you.',
-    });
-  };
 
   return (
     <View style={styles.container}>
@@ -72,11 +52,12 @@ export default function Community() {
         animationType="fade"
         onRequestClose={() => setShowAccountMenu(false)}
       >
-        <TouchableOpacity
-          style={styles.modalOverlay}
-          activeOpacity={1}
-          onPress={() => setShowAccountMenu(false)}
-        >
+        <View style={styles.modalOverlay}>
+          <TouchableOpacity
+            style={StyleSheet.absoluteFillObject}
+            activeOpacity={1}
+            onPress={() => setShowAccountMenu(false)}
+          />
           <View style={styles.modalContent}>
             <Text style={styles.modalTitle}>Skool Account</Text>
             <Text style={styles.modalDescription}>
@@ -87,7 +68,9 @@ export default function Community() {
 
             <TouchableOpacity
               style={[styles.modalButton, styles.deleteButton]}
-              onPress={requestAccountDeletion}
+              onPress={() =>
+                requestSkoolAccountDeletionAfterModal(() => setShowAccountMenu(false))
+              }
             >
               <Ionicons name="trash-outline" size={20} color="#fff" />
               <Text style={styles.modalButtonText}>Delete Skool Account</Text>
@@ -100,7 +83,7 @@ export default function Community() {
               <Text style={styles.cancelButtonText}>Cancel</Text>
             </TouchableOpacity>
           </View>
-        </TouchableOpacity>
+        </View>
       </Modal>
     </View>
   );

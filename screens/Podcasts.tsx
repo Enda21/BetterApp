@@ -2,6 +2,8 @@ import React, { useEffect, useState, useRef, useMemo, useCallback } from 'react'
 import { View, Text, StyleSheet, TextInput, TouchableOpacity, FlatList, ActivityIndicator, Image, AppState, AppStateStatus } from 'react-native';
 import { Audio, AVPlaybackStatus } from 'expo-av';
 import Slider from '@react-native-community/slider';
+import { configurePodcastAudioSession } from '../utils/podcastAudioSession';
+import { clearPodcastPlayerStore, persistPodcastPlayer, podcastPlayerStore } from '../services/podcastPlayerStore';
 
 type Episode = {
   id: string;
@@ -41,6 +43,7 @@ export default function Podcasts() {
   const userPausedRef = useRef(false);
   const playEpisodeRef = useRef<((ep: Episode, opts?: { startPosition?: number; isReconnect?: boolean }) => Promise<void>) | null>(null);
   const soundRef = useRef<Audio.Sound | null>(null);
+  const onPlaybackStatusUpdateRef = useRef<(status: AVPlaybackStatus) => void>(() => {});
 
   const MAX_RECONNECT_ATTEMPTS = 5;
   const BUFFERING_TIMEOUT_MS = 12000;
@@ -48,30 +51,43 @@ export default function Podcasts() {
 
   useEffect(() => {
     fetchEpisodes();
-    
-    // Set up audio mode
-    Audio.setAudioModeAsync({
-      allowsRecordingIOS: false,
-      staysActiveInBackground: true,
-      playsInSilentModeIOS: true,
-      shouldDuckAndroid: true,
+    configurePodcastAudioSession();
+
+    const { sound: storedSound, episode: storedEpisode } = podcastPlayerStore;
+    if (storedSound && storedEpisode) {
+      setSound(storedSound);
+      soundRef.current = storedSound;
+      setPlayingEpisodeId(storedEpisode.id);
+      currentEpisodeRef.current = storedEpisode;
+      storedSound.setOnPlaybackStatusUpdate((status: AVPlaybackStatus) => onPlaybackStatusUpdateRef.current(status));
+      storedSound.getStatusAsync().then((status: AVPlaybackStatus) => {
+        if (status.isLoaded) {
+          setPlaybackPosition(status.positionMillis);
+          playbackPositionRef.current = status.positionMillis;
+          setPlaybackDuration(status.durationMillis || 0);
+          setIsPlaying(status.isPlaying);
+          setIsBuffering(status.isBuffering);
+        }
+      });
+    }
+
+    const appStateAudioSub = AppState.addEventListener('change', (nextState: AppStateStatus) => {
+      if (nextState === 'background' || nextState === 'active') {
+        configurePodcastAudioSession();
+      }
     });
 
     return () => {
       if (scrollIntervalRef.current) {
         clearInterval(scrollIntervalRef.current);
       }
+      appStateAudioSub.remove();
     };
   }, []);
 
-  useEffect(() => {
-    return () => {
-      // Clean up sound on unmount or when sound changes
-      if (sound) {
-        sound.unloadAsync();
-      }
-    };
-  }, [sound]);
+  const attachSoundListener = (activeSound: Audio.Sound) => {
+    activeSound.setOnPlaybackStatusUpdate((status: AVPlaybackStatus) => onPlaybackStatusUpdateRef.current(status));
+  };
 
   useEffect(() => {
     if (searchQuery.trim()) {
@@ -104,6 +120,89 @@ export default function Podcasts() {
     setRetryAttempt(value);
   };
 
+  useEffect(() => {
+    onPlaybackStatusUpdateRef.current = (status: AVPlaybackStatus) => {
+      if (status.isLoaded) {
+        setPlaybackPosition(status.positionMillis);
+        playbackPositionRef.current = status.positionMillis;
+        setPlaybackDuration(status.durationMillis || 0);
+        setIsBuffering(status.isBuffering);
+        setIsPlaying(status.isPlaying);
+
+        if (status.isPlaying && !status.isBuffering) {
+          clearBufferingWatchdog();
+        }
+
+        if (status.isPlaying && status.isBuffering && !bufferingWatchdogRef.current) {
+          bufferingWatchdogRef.current = setTimeout(() => {
+            if (currentEpisodeRef.current && !userPausedRef.current) {
+              const nextAttempt = retryAttemptRef.current + 1;
+              if (nextAttempt > MAX_RECONNECT_ATTEMPTS) {
+                setIsReconnecting(false);
+                setConnectionIssue('Connection issue persists. Tap Reconnect to try again.');
+                return;
+              }
+
+              setRetryAttemptValue(nextAttempt);
+              const delay = Math.min(BASE_RETRY_DELAY_MS * Math.pow(2, nextAttempt - 1), 30000);
+              setIsReconnecting(true);
+              setConnectionIssue(`Connection stalled. Reconnecting (${nextAttempt}/${MAX_RECONNECT_ATTEMPTS})...`);
+              clearReconnectTimer();
+              reconnectTimeoutRef.current = setTimeout(() => {
+                if (currentEpisodeRef.current?.audio_url) {
+                  playEpisodeRef.current?.(currentEpisodeRef.current, {
+                    startPosition: playbackPositionRef.current,
+                    isReconnect: true,
+                  });
+                }
+              }, delay);
+            }
+          }, BUFFERING_TIMEOUT_MS);
+        }
+
+        if (status.didJustFinish) {
+          currentEpisodeRef.current = null;
+          userPausedRef.current = false;
+          clearReconnectTimer();
+          clearBufferingWatchdog();
+          setConnectionIssue(null);
+          setIsReconnecting(false);
+          setRetryAttemptValue(0);
+          setPlayingEpisodeId(null);
+          setIsPlaying(false);
+          setPlaybackPosition(0);
+          playbackPositionRef.current = 0;
+          clearPodcastPlayerStore();
+        }
+      } else {
+        clearBufferingWatchdog();
+
+        if (status.error && currentEpisodeRef.current && !userPausedRef.current) {
+          const nextAttempt = retryAttemptRef.current + 1;
+          if (nextAttempt > MAX_RECONNECT_ATTEMPTS) {
+            setIsReconnecting(false);
+            setConnectionIssue('Playback failed after retries. Tap Reconnect to continue.');
+            return;
+          }
+
+          setRetryAttemptValue(nextAttempt);
+          const delay = Math.min(BASE_RETRY_DELAY_MS * Math.pow(2, nextAttempt - 1), 30000);
+          setIsReconnecting(true);
+          setConnectionIssue(`Playback interrupted. Reconnecting (${nextAttempt}/${MAX_RECONNECT_ATTEMPTS})...`);
+          clearReconnectTimer();
+          reconnectTimeoutRef.current = setTimeout(() => {
+            if (currentEpisodeRef.current?.audio_url) {
+              playEpisodeRef.current?.(currentEpisodeRef.current, {
+                startPosition: playbackPositionRef.current,
+                isReconnect: true,
+              });
+            }
+          }, delay);
+        }
+      }
+    };
+  });
+
   const playEpisode = async (episode: Episode, options?: { startPosition?: number; isReconnect?: boolean }) => {
     try {
       if (!options?.isReconnect && sound) {
@@ -122,10 +221,17 @@ export default function Podcasts() {
         clearReconnectTimer();
         clearBufferingWatchdog();
         setRetryAttemptValue(0);
+        if (sound) {
+          await sound.unloadAsync();
+          setSound(null);
+          soundRef.current = null;
+        }
+        clearPodcastPlayerStore();
         return;
       }
 
       if (episode.audio_url) {
+        await configurePodcastAudioSession();
         setIsBuffering(true);
         const { sound: newSound } = await Audio.Sound.createAsync(
           { uri: episode.audio_url },
@@ -141,8 +247,10 @@ export default function Podcasts() {
         }
 
         setSound(newSound);
+        soundRef.current = newSound;
         setPlayingEpisodeId(episode.id);
         currentEpisodeRef.current = episode;
+        persistPodcastPlayer(newSound, episode);
         userPausedRef.current = false;
         setIsPlaying(true);
         setIsBuffering(false);
@@ -152,85 +260,7 @@ export default function Podcasts() {
         clearBufferingWatchdog();
         setRetryAttemptValue(0);
 
-        newSound.setOnPlaybackStatusUpdate((status: AVPlaybackStatus) => {
-          if (status.isLoaded) {
-            setPlaybackPosition(status.positionMillis);
-            playbackPositionRef.current = status.positionMillis;
-            setPlaybackDuration(status.durationMillis || 0);
-            setIsBuffering(status.isBuffering);
-            setIsPlaying(status.isPlaying);
-
-            if (status.isPlaying && !status.isBuffering) {
-              clearBufferingWatchdog();
-            }
-
-            if (status.isPlaying && status.isBuffering && !bufferingWatchdogRef.current) {
-              bufferingWatchdogRef.current = setTimeout(() => {
-                if (currentEpisodeRef.current && !userPausedRef.current) {
-                  const nextAttempt = retryAttemptRef.current + 1;
-                  if (nextAttempt > MAX_RECONNECT_ATTEMPTS) {
-                    setIsReconnecting(false);
-                    setConnectionIssue('Connection issue persists. Tap Reconnect to try again.');
-                    return;
-                  }
-
-                  setRetryAttemptValue(nextAttempt);
-                  const delay = Math.min(BASE_RETRY_DELAY_MS * Math.pow(2, nextAttempt - 1), 30000);
-                  setIsReconnecting(true);
-                  setConnectionIssue(`Connection stalled. Reconnecting (${nextAttempt}/${MAX_RECONNECT_ATTEMPTS})...`);
-                  clearReconnectTimer();
-                  reconnectTimeoutRef.current = setTimeout(() => {
-                    if (currentEpisodeRef.current?.audio_url) {
-                      playEpisode(currentEpisodeRef.current, {
-                        startPosition: playbackPositionRef.current,
-                        isReconnect: true,
-                      });
-                    }
-                  }, delay);
-                }
-              }, BUFFERING_TIMEOUT_MS);
-            }
-
-            if (status.didJustFinish) {
-              currentEpisodeRef.current = null;
-              userPausedRef.current = false;
-              clearReconnectTimer();
-              clearBufferingWatchdog();
-              setConnectionIssue(null);
-              setIsReconnecting(false);
-              setRetryAttemptValue(0);
-              setPlayingEpisodeId(null);
-              setIsPlaying(false);
-              setPlaybackPosition(0);
-              playbackPositionRef.current = 0;
-            }
-          } else {
-            clearBufferingWatchdog();
-
-            if (status.error && currentEpisodeRef.current && !userPausedRef.current) {
-              const nextAttempt = retryAttemptRef.current + 1;
-              if (nextAttempt > MAX_RECONNECT_ATTEMPTS) {
-                setIsReconnecting(false);
-                setConnectionIssue('Playback failed after retries. Tap Reconnect to continue.');
-                return;
-              }
-
-              setRetryAttemptValue(nextAttempt);
-              const delay = Math.min(BASE_RETRY_DELAY_MS * Math.pow(2, nextAttempt - 1), 30000);
-              setIsReconnecting(true);
-              setConnectionIssue(`Playback interrupted. Reconnecting (${nextAttempt}/${MAX_RECONNECT_ATTEMPTS})...`);
-              clearReconnectTimer();
-              reconnectTimeoutRef.current = setTimeout(() => {
-                if (currentEpisodeRef.current?.audio_url) {
-                  playEpisode(currentEpisodeRef.current, {
-                    startPosition: playbackPositionRef.current,
-                    isReconnect: true,
-                  });
-                }
-              }, delay);
-            }
-          }
-        });
+        attachSoundListener(newSound);
       }
     } catch (err) {
       console.error('Error playing episode:', err);
@@ -344,7 +374,9 @@ export default function Podcasts() {
       if (sound) {
         await sound.unloadAsync();
         setSound(null);
+        soundRef.current = null;
       }
+      clearPodcastPlayerStore();
 
       setPlayingEpisodeId(null);
       setIsPlaying(false);
@@ -440,20 +472,6 @@ export default function Podcasts() {
       isReconnect: true,
     });
   };
-
-  useEffect(() => {
-    // Cleanup on unmount
-    return () => {
-      if (scrollIntervalRef.current) {
-        clearInterval(scrollIntervalRef.current);
-      }
-      clearReconnectTimer();
-      clearBufferingWatchdog();
-      if (sound) {
-        sound.unloadAsync();
-      }
-    };
-  }, [sound]);
 
   const formatTime = (millis: number) => {
     const totalSeconds = Math.floor(millis / 1000);
