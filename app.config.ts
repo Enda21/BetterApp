@@ -36,13 +36,7 @@ export default {
     },
     plugins: [
       "expo-font",
-      [
-        "expo-av",
-        {
-          microphonePermission: false,
-        },
-      ],
-      ["./plugins/with-truecoach-queries.js",{ 
+      ["./plugins/with-truecoach-queries.js",{
         scheme: "truecoach", 
         androidPackages: [
           "co.truecoach.client",     // Production client app

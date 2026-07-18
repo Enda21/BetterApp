@@ -1,9 +1,8 @@
 import React, { useEffect, useState, useRef, useMemo, useCallback } from 'react';
 import { View, Text, StyleSheet, TextInput, TouchableOpacity, FlatList, ActivityIndicator, Image, AppState, AppStateStatus } from 'react-native';
-import { Audio, AVPlaybackStatus } from 'expo-av';
 import Slider from '@react-native-community/slider';
-import { configurePodcastAudioSession } from '../utils/podcastAudioSession';
-import { clearPodcastPlayerStore, persistPodcastPlayer, podcastPlayerStore } from '../services/podcastPlayerStore';
+import TrackPlayer, { Event, State, usePlaybackState, useProgress, useTrackPlayerEvents } from 'react-native-track-player';
+import { setupPodcastPlayer } from '../services/podcastTrackPlayerSetup';
 
 type Episode = {
   id: string;
@@ -12,6 +11,7 @@ type Episode = {
   published_at?: string;
   audio_url?: string;
   duration?: string;
+  image_url?: string;
 };
 
 export default function Podcasts() {
@@ -21,12 +21,7 @@ export default function Podcasts() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [playingEpisodeId, setPlayingEpisodeId] = useState<string | null>(null);
-  const [sound, setSound] = useState<Audio.Sound | null>(null);
-  const [isPlaying, setIsPlaying] = useState(false);
-  const [playbackPosition, setPlaybackPosition] = useState(0);
-  const [playbackDuration, setPlaybackDuration] = useState(0);
   const [playbackRate, setPlaybackRate] = useState(1.0);
-  const [isBuffering, setIsBuffering] = useState(false);
   const [connectionIssue, setConnectionIssue] = useState<string | null>(null);
   const [isReconnecting, setIsReconnecting] = useState(false);
   const [retryAttempt, setRetryAttempt] = useState(0);
@@ -42,38 +37,47 @@ export default function Podcasts() {
   const retryAttemptRef = useRef(0);
   const userPausedRef = useRef(false);
   const playEpisodeRef = useRef<((ep: Episode, opts?: { startPosition?: number; isReconnect?: boolean }) => Promise<void>) | null>(null);
-  const soundRef = useRef<Audio.Sound | null>(null);
-  const onPlaybackStatusUpdateRef = useRef<(status: AVPlaybackStatus) => void>(() => {});
+  const isLoadingTrackRef = useRef(false);
+
+  const rawPlaybackState = usePlaybackState();
+  const progress = useProgress(250);
+
+  const playbackState = rawPlaybackState.state;
+  const isPlaying = playbackState === State.Playing;
+  const isBuffering = playbackState === State.Buffering || playbackState === State.Loading;
+  const playbackPosition = progress.position * 1000;
+  const playbackDuration = progress.duration * 1000;
 
   const MAX_RECONNECT_ATTEMPTS = 5;
   const BUFFERING_TIMEOUT_MS = 12000;
   const BASE_RETRY_DELAY_MS = 1000;
 
   useEffect(() => {
-    fetchEpisodes();
-    configurePodcastAudioSession();
+    playbackPositionRef.current = playbackPosition;
+  }, [playbackPosition]);
 
-    const { sound: storedSound, episode: storedEpisode } = podcastPlayerStore;
-    if (storedSound && storedEpisode) {
-      setSound(storedSound);
-      soundRef.current = storedSound;
-      setPlayingEpisodeId(storedEpisode.id);
-      currentEpisodeRef.current = storedEpisode;
-      storedSound.setOnPlaybackStatusUpdate((status: AVPlaybackStatus) => onPlaybackStatusUpdateRef.current(status));
-      storedSound.getStatusAsync().then((status: AVPlaybackStatus) => {
-        if (status.isLoaded) {
-          setPlaybackPosition(status.positionMillis);
-          playbackPositionRef.current = status.positionMillis;
-          setPlaybackDuration(status.durationMillis || 0);
-          setIsPlaying(status.isPlaying);
-          setIsBuffering(status.isBuffering);
+  useEffect(() => {
+    fetchEpisodes();
+
+    setupPodcastPlayer()
+      .then(() => TrackPlayer.getActiveTrack())
+      .then((activeTrack) => {
+        if (activeTrack) {
+          const restoredEpisode: Episode = {
+            id: String(activeTrack.id),
+            title: activeTrack.title || '',
+            audio_url: typeof activeTrack.url === 'string' ? activeTrack.url : undefined,
+            image_url: typeof activeTrack.artwork === 'string' ? activeTrack.artwork : undefined,
+          };
+          currentEpisodeRef.current = restoredEpisode;
+          setPlayingEpisodeId(restoredEpisode.id);
         }
-      });
-    }
+      })
+      .catch((err) => console.error('Error setting up podcast player:', err));
 
     const appStateAudioSub = AppState.addEventListener('change', (nextState: AppStateStatus) => {
       if (nextState === 'background' || nextState === 'active') {
-        configurePodcastAudioSession();
+        setupPodcastPlayer().catch(() => {});
       }
     });
 
@@ -84,10 +88,6 @@ export default function Podcasts() {
       appStateAudioSub.remove();
     };
   }, []);
-
-  const attachSoundListener = (activeSound: Audio.Sound) => {
-    activeSound.setOnPlaybackStatusUpdate((status: AVPlaybackStatus) => onPlaybackStatusUpdateRef.current(status));
-  };
 
   useEffect(() => {
     if (searchQuery.trim()) {
@@ -120,75 +120,27 @@ export default function Podcasts() {
     setRetryAttempt(value);
   };
 
+  // Watches native playback state to run the same buffering-stall watchdog
+  // that used to live inside expo-av's onPlaybackStatusUpdate callback.
   useEffect(() => {
-    onPlaybackStatusUpdateRef.current = (status: AVPlaybackStatus) => {
-      if (status.isLoaded) {
-        setPlaybackPosition(status.positionMillis);
-        playbackPositionRef.current = status.positionMillis;
-        setPlaybackDuration(status.durationMillis || 0);
-        setIsBuffering(status.isBuffering);
-        setIsPlaying(status.isPlaying);
+    if (playbackState === State.Playing) {
+      clearBufferingWatchdog();
+    }
 
-        if (status.isPlaying && !status.isBuffering) {
-          clearBufferingWatchdog();
-        }
-
-        if (status.isPlaying && status.isBuffering && !bufferingWatchdogRef.current) {
-          bufferingWatchdogRef.current = setTimeout(() => {
-            if (currentEpisodeRef.current && !userPausedRef.current) {
-              const nextAttempt = retryAttemptRef.current + 1;
-              if (nextAttempt > MAX_RECONNECT_ATTEMPTS) {
-                setIsReconnecting(false);
-                setConnectionIssue('Connection issue persists. Tap Reconnect to try again.');
-                return;
-              }
-
-              setRetryAttemptValue(nextAttempt);
-              const delay = Math.min(BASE_RETRY_DELAY_MS * Math.pow(2, nextAttempt - 1), 30000);
-              setIsReconnecting(true);
-              setConnectionIssue(`Connection stalled. Reconnecting (${nextAttempt}/${MAX_RECONNECT_ATTEMPTS})...`);
-              clearReconnectTimer();
-              reconnectTimeoutRef.current = setTimeout(() => {
-                if (currentEpisodeRef.current?.audio_url) {
-                  playEpisodeRef.current?.(currentEpisodeRef.current, {
-                    startPosition: playbackPositionRef.current,
-                    isReconnect: true,
-                  });
-                }
-              }, delay);
-            }
-          }, BUFFERING_TIMEOUT_MS);
-        }
-
-        if (status.didJustFinish) {
-          currentEpisodeRef.current = null;
-          userPausedRef.current = false;
-          clearReconnectTimer();
-          clearBufferingWatchdog();
-          setConnectionIssue(null);
-          setIsReconnecting(false);
-          setRetryAttemptValue(0);
-          setPlayingEpisodeId(null);
-          setIsPlaying(false);
-          setPlaybackPosition(0);
-          playbackPositionRef.current = 0;
-          clearPodcastPlayerStore();
-        }
-      } else {
-        clearBufferingWatchdog();
-
-        if (status.error && currentEpisodeRef.current && !userPausedRef.current) {
+    if (playbackState === State.Buffering && !bufferingWatchdogRef.current) {
+      bufferingWatchdogRef.current = setTimeout(() => {
+        if (currentEpisodeRef.current && !userPausedRef.current) {
           const nextAttempt = retryAttemptRef.current + 1;
           if (nextAttempt > MAX_RECONNECT_ATTEMPTS) {
             setIsReconnecting(false);
-            setConnectionIssue('Playback failed after retries. Tap Reconnect to continue.');
+            setConnectionIssue('Connection issue persists. Tap Reconnect to try again.');
             return;
           }
 
           setRetryAttemptValue(nextAttempt);
           const delay = Math.min(BASE_RETRY_DELAY_MS * Math.pow(2, nextAttempt - 1), 30000);
           setIsReconnecting(true);
-          setConnectionIssue(`Playback interrupted. Reconnecting (${nextAttempt}/${MAX_RECONNECT_ATTEMPTS})...`);
+          setConnectionIssue(`Connection stalled. Reconnecting (${nextAttempt}/${MAX_RECONNECT_ATTEMPTS})...`);
           clearReconnectTimer();
           reconnectTimeoutRef.current = setTimeout(() => {
             if (currentEpisodeRef.current?.audio_url) {
@@ -199,72 +151,114 @@ export default function Podcasts() {
             }
           }, delay);
         }
-      }
-    };
-  });
+      }, BUFFERING_TIMEOUT_MS);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [playbackState]);
 
-  const playEpisode = async (episode: Episode, options?: { startPosition?: number; isReconnect?: boolean }) => {
-    try {
-      if (!options?.isReconnect && sound) {
-        await sound.unloadAsync();
-        setSound(null);
-      }
+  useTrackPlayerEvents([Event.PlaybackError, Event.PlaybackQueueEnded], (event) => {
+    if (event.type === Event.PlaybackQueueEnded) {
+      currentEpisodeRef.current = null;
+      userPausedRef.current = false;
+      clearReconnectTimer();
+      clearBufferingWatchdog();
+      setConnectionIssue(null);
+      setIsReconnecting(false);
+      setRetryAttemptValue(0);
+      setPlayingEpisodeId(null);
+      playbackPositionRef.current = 0;
+      return;
+    }
 
-      if (!options?.isReconnect && playingEpisodeId === episode.id) {
-        currentEpisodeRef.current = null;
-        setPlayingEpisodeId(null);
-        setPlaybackPosition(0);
-        playbackPositionRef.current = 0;
-        setPlaybackDuration(0);
-        setConnectionIssue(null);
+    clearBufferingWatchdog();
+
+    if (currentEpisodeRef.current && !userPausedRef.current) {
+      const nextAttempt = retryAttemptRef.current + 1;
+      if (nextAttempt > MAX_RECONNECT_ATTEMPTS) {
         setIsReconnecting(false);
-        clearReconnectTimer();
-        clearBufferingWatchdog();
-        setRetryAttemptValue(0);
-        if (sound) {
-          await sound.unloadAsync();
-          setSound(null);
-          soundRef.current = null;
-        }
-        clearPodcastPlayerStore();
+        setConnectionIssue('Playback failed after retries. Tap Reconnect to continue.');
         return;
       }
 
-      if (episode.audio_url) {
-        await configurePodcastAudioSession();
-        setIsBuffering(true);
-        const { sound: newSound } = await Audio.Sound.createAsync(
-          { uri: episode.audio_url },
-          {
-            shouldPlay: true,
-            rate: playbackRate,
-            positionMillis: options?.startPosition ?? 0,
-          }
-        );
-
-        if (sound && options?.isReconnect) {
-          await sound.unloadAsync();
+      setRetryAttemptValue(nextAttempt);
+      const delay = Math.min(BASE_RETRY_DELAY_MS * Math.pow(2, nextAttempt - 1), 30000);
+      setIsReconnecting(true);
+      setConnectionIssue(`Playback interrupted. Reconnecting (${nextAttempt}/${MAX_RECONNECT_ATTEMPTS})...`);
+      clearReconnectTimer();
+      reconnectTimeoutRef.current = setTimeout(() => {
+        if (currentEpisodeRef.current?.audio_url) {
+          playEpisodeRef.current?.(currentEpisodeRef.current, {
+            startPosition: playbackPositionRef.current,
+            isReconnect: true,
+          });
         }
+      }, delay);
+    }
+  });
 
-        setSound(newSound);
-        soundRef.current = newSound;
-        setPlayingEpisodeId(episode.id);
-        currentEpisodeRef.current = episode;
-        persistPodcastPlayer(newSound, episode);
-        userPausedRef.current = false;
-        setIsPlaying(true);
-        setIsBuffering(false);
-        setConnectionIssue(null);
-        setIsReconnecting(false);
-        clearReconnectTimer();
-        clearBufferingWatchdog();
-        setRetryAttemptValue(0);
+  const playEpisode = async (episode: Episode, options?: { startPosition?: number; isReconnect?: boolean }) => {
+    // Prevent overlapping loads: multiple triggers (buffering watchdog, AppState
+    // resume, playback error, manual Reconnect tap) can each call this around the
+    // same time. Without this guard, two concurrent TrackPlayer.add calls could
+    // both proceed and race each other.
+    if (isLoadingTrackRef.current) {
+      return;
+    }
 
-        attachSoundListener(newSound);
+    const isStopToggle = !options?.isReconnect && playingEpisodeId === episode.id;
+
+    if (isStopToggle) {
+      currentEpisodeRef.current = null;
+      setPlayingEpisodeId(null);
+      setConnectionIssue(null);
+      setIsReconnecting(false);
+      clearReconnectTimer();
+      clearBufferingWatchdog();
+      setRetryAttemptValue(0);
+      playbackPositionRef.current = 0;
+
+      try {
+        await TrackPlayer.reset();
+      } catch (e) {
+        // already reset
       }
+      return;
+    }
+
+    if (!episode.audio_url) {
+      return;
+    }
+
+    isLoadingTrackRef.current = true;
+
+    try {
+      await setupPodcastPlayer();
+      await TrackPlayer.reset();
+      await TrackPlayer.add({
+        id: episode.id,
+        url: episode.audio_url,
+        title: episode.title,
+        artist: 'The Be Better Man Podcast',
+        artwork: episode.image_url || require('../assets/KMFpODCAST.png'),
+      });
+
+      const startPositionSeconds = (options?.startPosition ?? 0) / 1000;
+      if (startPositionSeconds > 0) {
+        await TrackPlayer.seekTo(startPositionSeconds);
+      }
+      await TrackPlayer.setRate(playbackRate);
+      await TrackPlayer.play();
+
+      setPlayingEpisodeId(episode.id);
+      currentEpisodeRef.current = episode;
+      userPausedRef.current = false;
+      setConnectionIssue(null);
+      setIsReconnecting(false);
+      clearReconnectTimer();
+      clearBufferingWatchdog();
+      setRetryAttemptValue(0);
     } catch (err) {
       console.error('Error playing episode:', err);
-      setIsBuffering(false);
 
       if (currentEpisodeRef.current && !userPausedRef.current) {
         const nextAttempt = retryAttemptRef.current + 1;
@@ -276,7 +270,7 @@ export default function Podcasts() {
           clearReconnectTimer();
           reconnectTimeoutRef.current = setTimeout(() => {
             if (currentEpisodeRef.current?.audio_url) {
-              playEpisode(currentEpisodeRef.current, {
+              playEpisodeRef.current?.(currentEpisodeRef.current, {
                 startPosition: playbackPositionRef.current,
                 isReconnect: true,
               });
@@ -289,14 +283,11 @@ export default function Podcasts() {
       } else {
         setPlayingEpisodeId(null);
       }
+    } finally {
+      isLoadingTrackRef.current = false;
     }
   };
   playEpisodeRef.current = playEpisode;
-
-  // Keep soundRef in sync so AppState handler can check status
-  useEffect(() => {
-    soundRef.current = sound;
-  }, [sound]);
 
   // When app returns to foreground (e.g. user unlocks device), immediately kick off buffer/reconnect
   // if the stream is stalled — so buffering starts right away instead of waiting for next status update
@@ -305,15 +296,14 @@ export default function Podcasts() {
       if (nextState !== 'active') return;
       const ep = currentEpisodeRef.current;
       if (!ep?.audio_url || userPausedRef.current) return;
-      const s = soundRef.current;
-      if (s) {
-        try {
-          const status = await s.getStatusAsync();
-          if (status.isLoaded && status.isPlaying && !status.isBuffering) return; // playing fine, no action
-        } catch {
-          // getStatusAsync failed, assume we need to reconnect
-        }
+
+      try {
+        const { state } = await TrackPlayer.getPlaybackState();
+        if (state === State.Playing) return; // playing fine, no action
+      } catch {
+        // getPlaybackState failed, assume we need to reconnect
       }
+
       clearReconnectTimer();
       clearBufferingWatchdog();
       playEpisodeRef.current?.(ep, {
@@ -328,20 +318,20 @@ export default function Podcasts() {
     try {
       setLoading(true);
       setError(null);
-      
+
       // Fetch episodes - add show_id if you know it, or fetch all episodes you have access to
       const response = await fetch('https://api.transistor.fm/v1/episodes?pagination[per]=100&status=published', {
         headers: {
           'x-api-key': 'rcQeJqRa73GezCwckzvrqQ',
         },
       });
-      
+
       if (!response.ok) {
         throw new Error(`Failed to fetch episodes: ${response.status} ${response.statusText}`);
       }
-      
+
       const data = await response.json();
-      
+
       // Transform JSON:API format to our Episode type
       const transformedEpisodes: Episode[] = (data.data || []).map((item: any) => ({
         id: item.id,
@@ -350,8 +340,9 @@ export default function Podcasts() {
         published_at: item.attributes?.published_at,
         audio_url: item.attributes?.media_url,
         duration: item.attributes?.duration_in_mmss,
+        image_url: item.attributes?.image_url,
       }));
-      
+
       setEpisodes(transformedEpisodes);
       setFilteredEpisodes(transformedEpisodes);
     } catch (err) {
@@ -371,22 +362,17 @@ export default function Podcasts() {
       userPausedRef.current = false;
       currentEpisodeRef.current = null;
 
-      if (sound) {
-        await sound.unloadAsync();
-        setSound(null);
-        soundRef.current = null;
+      try {
+        await TrackPlayer.reset();
+      } catch (e) {
+        // already reset
       }
-      clearPodcastPlayerStore();
 
       setPlayingEpisodeId(null);
-      setIsPlaying(false);
-      setIsBuffering(false);
-      setPlaybackPosition(0);
-      playbackPositionRef.current = 0;
-      setPlaybackDuration(0);
       setConnectionIssue(null);
       setIsReconnecting(false);
       setRetryAttemptValue(0);
+      playbackPositionRef.current = 0;
 
       await fetchEpisodes();
       setRefreshKey((prev) => prev + 1);
@@ -396,15 +382,12 @@ export default function Podcasts() {
   };
 
   const pauseEpisode = async () => {
-    if (sound) {
-      userPausedRef.current = true;
-      clearReconnectTimer();
-      clearBufferingWatchdog();
-      setIsReconnecting(false);
-      setConnectionIssue(null);
-      await sound.pauseAsync();
-      setIsPlaying(false);
-    }
+    userPausedRef.current = true;
+    clearReconnectTimer();
+    clearBufferingWatchdog();
+    setIsReconnecting(false);
+    setConnectionIssue(null);
+    await TrackPlayer.pause();
   };
 
   const resumeEpisode = async () => {
@@ -420,39 +403,31 @@ export default function Podcasts() {
       return;
     }
 
-    if (sound) {
-      userPausedRef.current = false;
-      await sound.playAsync();
-      setIsPlaying(true);
-    }
+    userPausedRef.current = false;
+    await TrackPlayer.play();
   };
 
-  const seekTo = async (position: number) => {
-    if (sound) {
-      playbackPositionRef.current = position;
-      await sound.setPositionAsync(position);
-    }
+  const seekTo = async (positionMillis: number) => {
+    playbackPositionRef.current = positionMillis;
+    await TrackPlayer.seekTo(positionMillis / 1000);
   };
 
   const rewindTenSeconds = async () => {
-    if (sound && playbackPosition >= 10000) {
-      await sound.setPositionAsync(playbackPosition - 10000);
-    } else if (sound) {
-      await sound.setPositionAsync(0);
-    }
+    await seekTo(Math.max(0, playbackPosition - 10000));
   };
 
   const skipThirtySeconds = async () => {
-    if (sound && playbackDuration > 0) {
-      const newPosition = Math.min(playbackPosition + 30000, playbackDuration);
-      await sound.setPositionAsync(newPosition);
+    if (playbackDuration > 0) {
+      await seekTo(Math.min(playbackPosition + 30000, playbackDuration));
+    } else {
+      await seekTo(playbackPosition + 30000);
     }
   };
 
   const changePlaybackSpeed = async (rate: number) => {
     setPlaybackRate(rate);
-    if (sound) {
-      await sound.setRateAsync(rate, true);
+    if (playingEpisodeId) {
+      await TrackPlayer.setRate(rate);
     }
   };
 
@@ -487,16 +462,16 @@ export default function Podcasts() {
   const renderEpisode = useCallback(({ item }: { item: Episode }) => {
     const isCurrentEpisode = playingEpisodeId === item.id;
     const cleanDescription = item.description ? stripHtml(item.description) : '';
-    
+
     return (
       <View style={styles.episodeCard}>
         {/* Logo in top left corner */}
-        <Image 
-          source={require('../assets/KMFpODCAST.png')} 
+        <Image
+          source={require('../assets/KMFpODCAST.png')}
           style={styles.episodeLogo}
           resizeMode="contain"
         />
-        
+
         <View style={styles.episodeContent}>
           <Text style={styles.episodeTitle}>{item.title}</Text>
           {cleanDescription && (
@@ -514,12 +489,12 @@ export default function Podcasts() {
             <Text style={styles.episodeDuration}>{item.duration}</Text>
           )}
         </View>
-        
+
         {/* Playback Controls */}
         {item.audio_url && (
           <View style={styles.playerContainer}>
             {/* Play/Pause Button */}
-            <TouchableOpacity 
+            <TouchableOpacity
               style={styles.playButton}
               onPress={() => isPlaying ? pauseEpisode() : (isCurrentEpisode ? resumeEpisode() : playEpisode(item))}
             >
@@ -549,7 +524,7 @@ export default function Podcasts() {
                 {/* Controls Row */}
                 <View style={styles.controlsRow}>
                   {/* Rewind 10 seconds */}
-                  <TouchableOpacity 
+                  <TouchableOpacity
                     style={styles.controlButton}
                     onPress={rewindTenSeconds}
                   >
@@ -578,7 +553,7 @@ export default function Podcasts() {
                   </View>
 
                   {/* Skip 30 seconds */}
-                  <TouchableOpacity 
+                  <TouchableOpacity
                     style={styles.controlButton}
                     onPress={skipThirtySeconds}
                   >
@@ -817,13 +792,13 @@ const styles = StyleSheet.create({
   header: { fontSize: 20, fontWeight: 'bold', marginBottom: 16, color: '#1A1A1A', textAlign: 'center', marginTop: 16 },
   sectionHeader: { fontSize: 18, fontWeight: 'bold', marginBottom: 12, color: '#1A1A1A', textAlign: 'center', marginTop: 8 },
   latestEpisodeContainer: { width: '100%', maxWidth: 640, marginBottom: 16, alignSelf: 'center', marginHorizontal: 0 },
-  allEpisodesContainer: { 
-    width: '100%', 
-    maxWidth: 640, 
-    backgroundColor: '#fff', 
-    borderRadius: 12, 
-    padding: 16, 
-    alignSelf: 'center', 
+  allEpisodesContainer: {
+    width: '100%',
+    maxWidth: 640,
+    backgroundColor: '#fff',
+    borderRadius: 12,
+    padding: 16,
+    alignSelf: 'center',
     marginBottom: 16,
     position: 'relative',
   },
