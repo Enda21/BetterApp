@@ -3,21 +3,21 @@
 <plist version="1.0">
 <dict>
 	<key>API_KEY</key>
-	<string>AIzaSyA9PMXgxpO4HATIxnXPI7L4VznLod6UTAc</string>
+	<string>AIzaSyCpi8zjYbnBdGHzsD3aNJ3JhGkKU7uMUyI</string>
 	<key>GCM_SENDER_ID</key>
-	<string>60800149159</string>
+	<string>584197333125</string>
 	<key>PLIST_VERSION</key>
 	<string>1</string>
 	<key>BUNDLE_ID</key>
 	<string>com.brody32.better</string>
 	<key>PROJECT_ID</key>
-	<string>betterapp-9366b</string>
+	<string>betterapp-49e70</string>
 	<key>STORAGE_BUCKET</key>
-	<string>betterapp-9366b.firebasestorage.app</string>
+	<string>betterapp-49e70.firebasestorage.app</string>
 	<key>IS_ADS_ENABLED</key>
 	<false></false>
 	<key>IS_ANALYTICS_ENABLED</key>
-	<false></false>
+	<true></true>
 	<key>IS_APPINVITE_ENABLED</key>
 	<true></true>
 	<key>IS_GCM_ENABLED</key>
@@ -25,6 +25,6 @@
 	<key>IS_SIGNIN_ENABLED</key>
 	<true></true>
 	<key>GOOGLE_APP_ID</key>
-	<string>1:60800149159:ios:9dbcaae2cb1514a217dd82</string>
+	<string>1:584197333125:ios:f9e4b2ae9c10323802c9ec</string>
 </dict>
 </plist>
