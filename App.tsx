@@ -1,6 +1,6 @@
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
 import { Image } from 'react-native';
-import { NavigationContainer } from '@react-navigation/native';
+import { NavigationContainer, useNavigationContainerRef } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { Ionicons, MaterialCommunityIcons, Feather } from '@expo/vector-icons';
@@ -18,6 +18,7 @@ import LessonViewer from './screens/LessonViewer';
 import Podcasts from './screens/Podcasts';
 import PdfViewer from './screens/PdfViewer';
 import Community from './screens/Community';
+import { enableFirebaseAnalytics, logFirebaseScreenView } from './services/firebaseAnalytics';
 
 
 const Tab = createBottomTabNavigator();
@@ -85,8 +86,39 @@ function MainTabs() {
 }
 
 export default function App() {
+  const navigationRef = useNavigationContainerRef();
+  const routeNameRef = useRef<string | undefined>(undefined);
+
+  useEffect(() => {
+    enableFirebaseAnalytics().catch((error) => {
+      console.error('Failed to enable Firebase Analytics collection.', error);
+    });
+  }, []);
+
+  const trackCurrentScreen = () => {
+    const currentRouteName = navigationRef.getCurrentRoute()?.name;
+    const previousRouteName = routeNameRef.current;
+
+    if (!currentRouteName) {
+      return;
+    }
+
+    if (currentRouteName === previousRouteName) {
+      return;
+    }
+
+    routeNameRef.current = currentRouteName;
+    logFirebaseScreenView(currentRouteName).catch((error) => {
+      console.error(`Failed to log screen view for ${currentRouteName}.`, error);
+    });
+  };
+
   return (
-    <NavigationContainer>
+    <NavigationContainer
+      ref={navigationRef}
+      onReady={trackCurrentScreen}
+      onStateChange={trackCurrentScreen}
+    >
       <RootStack.Navigator screenOptions={{ headerShown: false }}>
         <RootStack.Screen name="Main" component={MainTabs} />
         <RootStack.Screen name="Lesson" component={LessonViewer} />

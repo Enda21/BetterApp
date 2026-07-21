@@ -16,3 +16,20 @@ In app.Config version Has to go up by 1
 eas build --platform ios
 eas submit --platform ios
 eas submit --platform ios
+
+# Firebase Analytics setup (iOS + Android)
+1. In Firebase Console, open your project and add both apps:
+   - iOS bundle ID: com.brody32.better
+   - Android package: com.brody32.better
+2. Download config files:
+   - iOS: GoogleService-Info.plist -> place at project root as `GoogleService-Info.plist`
+   - Android: google-services.json -> place at project root as `google-services.json`
+3. Rebuild native apps (required after adding Firebase native dependencies):
+   - Android: eas build -p android --profile production
+   - iOS: eas build --platform ios
+4. Screen tracking is now automatic from React Navigation.
+   - Event name: `screen_view`
+   - Params: `screen_name`, `screen_class`
+5. In Firebase Console:
+   - Go to Analytics -> Events (to verify events arrive)
+   - Go to Analytics -> Engagement -> Pages and screens (to see most-used screens)

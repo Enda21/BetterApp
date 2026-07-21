@@ -1,5 +1,4 @@
 import { registerRootComponent } from 'expo';
-import TrackPlayer from 'react-native-track-player';
 
 import App from './App';
 
@@ -8,4 +7,26 @@ import App from './App';
 // the environment is set up appropriately
 registerRootComponent(App);
 
-TrackPlayer.registerPlaybackService(() => require('./services/trackPlayerService').default);
+let trackPlayerModule: unknown;
+try {
+  trackPlayerModule = require('react-native-track-player');
+} catch (error) {
+  console.error('TrackPlayer is unavailable; skipping playback service registration.', error);
+}
+
+const trackPlayerDefault = (
+  trackPlayerModule &&
+  typeof trackPlayerModule === 'object' &&
+  'default' in trackPlayerModule
+) ? trackPlayerModule.default : undefined;
+
+if (
+  trackPlayerDefault &&
+  typeof trackPlayerDefault === 'object' &&
+  'registerPlaybackService' in trackPlayerDefault &&
+  typeof trackPlayerDefault.registerPlaybackService === 'function'
+) {
+  trackPlayerDefault.registerPlaybackService(
+    () => require('./services/trackPlayerService').default
+  );
+}
