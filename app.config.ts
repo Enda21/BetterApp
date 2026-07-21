@@ -38,6 +38,11 @@ export default {
     },
     plugins: [
       "@react-native-firebase/app",
+      ["expo-build-properties", {
+        "ios": {
+          "useFrameworks": "static"
+        }
+      }],
       "expo-font",
       ["./plugins/with-truecoach-queries.js",{
         scheme: "truecoach", 
