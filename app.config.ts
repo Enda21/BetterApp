@@ -6,7 +6,7 @@ export default {
     name: "Better",
     slug: "betterapp",
     owner: "brody32", // optional but recommended
-    version: "1.1.12",
+    version: "1.1.13",
     icon: "./assets/BetterLogo2.png",
     extra: {
       eas: {
@@ -16,7 +16,8 @@ export default {
     },
     ios: {
       bundleIdentifier: "com.brody32.better",
-      buildNumber: "1.0.17",
+      buildNumber: "1.0.18",
+      googleServicesFile: "./GoogleService-Info.plist",
       infoPlist: {
         LSApplicationQueriesSchemes: ["truecoach"],
         ITSAppUsesNonExemptEncryption: false,
@@ -27,7 +28,8 @@ export default {
     },
     android: {
       package: "com.brody32.better",
-      versionCode: 16,
+      versionCode: 17,
+      googleServicesFile: "./google-services.json",
       Permissions: [],
        foregroundImage: "./assets/adaptive-icon.png", // transparent PNG
         backgroundColor: "#FFFFFF",
@@ -35,6 +37,7 @@ export default {
         monochromeImage: "./assets/adaptive-icon-mono.png"
     },
     plugins: [
+      "@react-native-firebase/app",
       "expo-font",
       ["./plugins/with-truecoach-queries.js",{
         scheme: "truecoach", 
@@ -49,6 +52,6 @@ export default {
   "updates": {
     "url": "https://u.expo.dev/4dc1c75e-9745-4348-90e7-2d5241a419e3"
   },
-  "runtimeVersion": "1.1.12"
+  "runtimeVersion": "1.1.13"
   },
 };
