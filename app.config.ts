@@ -43,6 +43,7 @@ export default {
           "useFrameworks": "static"
         }
       }],
+      "./plugins/with-rnfirebase-static-framework.js",
       "expo-font",
       ["./plugins/with-truecoach-queries.js",{
         scheme: "truecoach", 
