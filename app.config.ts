@@ -40,7 +40,11 @@ export default {
       "@react-native-firebase/app",
       ["expo-build-properties", {
         "ios": {
-          "useFrameworks": "static"
+          "useFrameworks": "static",
+          // react-native-firebase is incompatible with RN 0.81's precompiled
+          // React-Core under static frameworks (invertase/react-native-firebase#8657);
+          // build RN from source so RCT_USE_PREBUILT_RNCORE is disabled.
+          "buildReactNativeFromSource": true
         }
       }],
       "./plugins/with-rnfirebase-static-framework.js",
