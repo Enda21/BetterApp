@@ -400,3 +400,37 @@ index b2409a0..5009237 100644
      }
 +    }
  }
+diff --git a/node_modules/react-native-track-player/android/src/main/java/com/doublesymmetry/trackplayer/service/MusicService.kt b/node_modules/react-native-track-player/android/src/main/java/com/doublesymmetry/trackplayer/service/MusicService.kt
+index afa6b0f..e050010 100644
+--- a/node_modules/react-native-track-player/android/src/main/java/com/doublesymmetry/trackplayer/service/MusicService.kt
++++ b/node_modules/react-native-track-player/android/src/main/java/com/doublesymmetry/trackplayer/service/MusicService.kt
+@@ -739,9 +739,19 @@ class MusicService : HeadlessJsTaskService() {
+         return bundle
+     }
+ 
++    // Bridgeless (New Architecture) apps run on ReactHost; reactInstanceManager
++    // belongs to the legacy bridge and its currentReactContext stays null there,
++    // which silently drops every emitted event.
++    private val appReactContext: com.facebook.react.bridge.ReactContext?
++        get() {
++            val host = (application as com.facebook.react.ReactApplication).reactHost
++            return if (host != null) host.currentReactContext
++            else reactNativeHost.reactInstanceManager.currentReactContext
++        }
++
+     @MainThread
+     private fun emit(event: String, data: Bundle? = null) {
+-        reactNativeHost.reactInstanceManager.currentReactContext
++        appReactContext
+             ?.getJSModule(DeviceEventManagerModule.RCTDeviceEventEmitter::class.java)
+             ?.emit(event, data?.let { Arguments.fromBundle(it) })
+     }
+@@ -751,7 +761,7 @@ class MusicService : HeadlessJsTaskService() {
+         val payload = Arguments.createArray()
+         data.forEach { payload.pushMap(Arguments.fromBundle(it)) }
+ 
+-        reactNativeHost.reactInstanceManager.currentReactContext
++        appReactContext
+             ?.getJSModule(DeviceEventManagerModule.RCTDeviceEventEmitter::class.java)
+             ?.emit(event, payload)
+     }
