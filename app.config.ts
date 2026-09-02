@@ -6,7 +6,7 @@ export default {
     name: "Better",
     slug: "betterapp",
     owner: "brody32", // optional but recommended
-    version: "1.1.13",
+    version: "1.1.14",
     icon: "./assets/BetterLogo2.png",
     extra: {
       eas: {
@@ -16,7 +16,7 @@ export default {
     },
     ios: {
       bundleIdentifier: "com.brody32.better",
-      buildNumber: "1.0.18",
+      buildNumber: "1.0.19",
       googleServicesFile: "./GoogleService-Info.plist",
       infoPlist: {
         LSApplicationQueriesSchemes: ["truecoach"],
@@ -28,7 +28,7 @@ export default {
     },
     android: {
       package: "com.brody32.better",
-      versionCode: 17,
+      versionCode: 18,
       googleServicesFile: "./google-services.json",
       Permissions: [],
        foregroundImage: "./assets/adaptive-icon.png", // transparent PNG
@@ -67,6 +67,6 @@ export default {
   "updates": {
     "url": "https://u.expo.dev/4dc1c75e-9745-4348-90e7-2d5241a419e3"
   },
-  "runtimeVersion": "1.1.13"
+  "runtimeVersion": "1.1.14"
   },
 };

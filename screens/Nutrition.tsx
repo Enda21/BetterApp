@@ -9,6 +9,7 @@ import {
   TextInput,
   RefreshControl,
   ActivityIndicator,
+  Linking,
 } from 'react-native';
 import { Asset } from 'expo-asset';
 import { Ionicons } from '@expo/vector-icons';
@@ -63,6 +64,18 @@ function titleFromFilename(filename: string) {
 }
 
 const isHttpUrl = (u?: string) => !!u && /^https?:\/\//i.test(u);
+
+type Source = { label: string; url: string };
+
+// Citation for the nutrition data, calorie/macro figures and portion sizes
+// shown in the meal plan PDFs (Apple Guideline 1.4.1). Calories and macros
+// were calculated using MyFitnessPal's food database.
+const SOURCES: Source[] = [
+  {
+    label: 'MyFitnessPal Food & Nutrition Database',
+    url: 'https://www.myfitnesspal.com/food/calorie-chart-nutrition-facts',
+  },
+];
 
 const Nutrition = () => {
   const navigation: any = useNavigation();
@@ -141,6 +154,14 @@ const Nutrition = () => {
   };
   // Note: Download & Share option removed. Tapping a card will directly open the PDF.
 
+  const openSource = async (url: string) => {
+    try {
+      await Linking.openURL(url);
+    } catch {
+      Alert.alert('Error', 'Could not open this link.');
+    }
+  };
+
   return (
     <ScrollView
       style={styles.container}
@@ -163,6 +184,11 @@ const Nutrition = () => {
           <Text style={styles.refreshText}>{refreshing ? 'Refreshing' : 'Refresh'}</Text>
         </TouchableOpacity>
       </View>
+
+      <Text style={styles.sourceNotice}>
+        Calorie and macro figures are calculated using the MyFitnessPal food
+        database. See Sources & References below.
+      </Text>
 
       <TextInput
         placeholder="Search meal plans..."
@@ -198,6 +224,30 @@ const Nutrition = () => {
       {filtered.length === 0 && (
         <Text style={styles.empty}>No meal plans match “{query}”.</Text>
       )}
+
+      <View style={styles.sourcesSection}>
+        <Text style={styles.sourcesHeader}>Sources & References</Text>
+        <Text style={styles.sourcesIntro}>
+          The calorie, macro and portion figures in these meal plans were
+          calculated using the MyFitnessPal food database:
+        </Text>
+        {SOURCES.map((s) => (
+          <TouchableOpacity
+            key={s.url}
+            onPress={() => openSource(s.url)}
+            style={styles.sourceRow}
+            accessibilityRole="link"
+          >
+            <Ionicons name="link-outline" size={16} color="#3b82f6" />
+            <Text style={styles.sourceLink}>{s.label}</Text>
+          </TouchableOpacity>
+        ))}
+        <Text style={styles.disclaimer}>
+          This content is general nutrition guidance, not medical advice.
+          Consult a doctor or registered dietitian before making changes to
+          your diet.
+        </Text>
+      </View>
     </ScrollView>
   );
 };
@@ -232,6 +282,13 @@ const styles = StyleSheet.create({
     fontSize: 12,
   },
 
+  sourceNotice: {
+    fontSize: 12,
+    color: '#334155',
+    marginBottom: 12,
+    lineHeight: 16,
+  },
+
   search: {
     backgroundColor: '#0f172a',
     color: '#e2e8f0',
@@ -260,6 +317,24 @@ const styles = StyleSheet.create({
   cardSub: { fontSize: 12, color: '#cbd5e1' },
   cardHint: { marginTop: 10, fontSize: 12, color: '#93c5fd' },
   empty: { color: '#0f172a', opacity: 0.7, paddingVertical: 20 },
+
+  sourcesSection: {
+    marginTop: 20,
+    marginBottom: 40,
+    paddingTop: 16,
+    borderTopWidth: 1,
+    borderTopColor: '#d6d3c4',
+  },
+  sourcesHeader: { fontSize: 16, fontWeight: '700', color: '#0f172a', marginBottom: 6 },
+  sourcesIntro: { fontSize: 12, color: '#334155', marginBottom: 10, lineHeight: 17 },
+  sourceRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    paddingVertical: 6,
+  },
+  sourceLink: { fontSize: 13, color: '#3b82f6', textDecorationLine: 'underline', flexShrink: 1 },
+  disclaimer: { marginTop: 12, fontSize: 11, color: '#64748b', lineHeight: 16, fontStyle: 'italic' },
 });
 
 export default Nutrition;
