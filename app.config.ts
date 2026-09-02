@@ -49,6 +49,11 @@ export default {
       }],
       "./plugins/with-rnfirebase-static-framework.js",
       "expo-font",
+      "@react-native-community/datetimepicker",
+      "expo-mail-composer",
+      "expo-sharing",
+      "expo-status-bar",
+      "expo-web-browser",
       ["./plugins/with-truecoach-queries.js",{
         scheme: "truecoach", 
         androidPackages: [
