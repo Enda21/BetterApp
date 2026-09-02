@@ -35,3 +35,16 @@ eas submit --platform ios
    - Go to Analytics -> Engagement -> Pages and screens (to see most-used screens)
 
    npx eas-cli submit --platform android --id e0b29851-f31b-48a4-a067-d3df971ddcb8 --non-interactive 2>&1 | tail -25
+
+   # Get Found issue an put them in a excel 
+   $alerts = gh api repos/Enda21/BetterApp/dependabot/alerts | ConvertFrom-Json
+@($alerts) | ForEach-Object {
+    [PSCustomObject]@{
+        Number    = $_.number
+        Package   = $_.security_vulnerability.package.name
+        Severity  = $_.security_vulnerability.severity
+        Summary   = $_.security_advisory.summary
+        State     = $_.state
+        CreatedAt = $_.created_at
+    }
+} | Export-Csv -Path alerts.csv -NoTypeInformation
