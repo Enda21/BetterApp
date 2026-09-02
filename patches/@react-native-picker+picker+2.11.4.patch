@@ -1,0 +1,23 @@
+diff --git a/node_modules/@react-native-picker/picker/android/build.gradle b/node_modules/@react-native-picker/picker/android/build.gradle
+index 155b3a8..f035a99 100644
+--- a/node_modules/@react-native-picker/picker/android/build.gradle
++++ b/node_modules/@react-native-picker/picker/android/build.gradle
+@@ -1,16 +1,6 @@
+ 
+-buildscript {
+-    ext.safeExtGet = {prop, fallback ->
+-        rootProject.ext.has(prop) ? rootProject.ext.get(prop) : fallback
+-    }
+-    repositories {
+-        google()
+-        mavenCentral()
+-    }
+-
+-    dependencies {
+-        classpath("com.android.tools.build:gradle:7.2.0")
+-    }
++ext.safeExtGet = {prop, fallback ->
++    rootProject.ext.has(prop) ? rootProject.ext.get(prop) : fallback
+ }
+ 
+ def getExtOrDefault(name) {

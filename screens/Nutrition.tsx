@@ -73,7 +73,7 @@ type Source = { label: string; url: string };
 const SOURCES: Source[] = [
   {
     label: 'MyFitnessPal Food & Nutrition Database',
-    url: 'https://www.myfitnesspal.com/food/calorie-chart-nutrition-facts',
+    url: 'https://blog.myfitnesspal.com/how-food-database-works/',
   },
 ];
 
