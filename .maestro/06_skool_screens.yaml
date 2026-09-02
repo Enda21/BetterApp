@@ -1,0 +1,58 @@
+# ============================================================
+# Maestro E2E – 06: Skool Community & Courses
+# Verifies the Skool WebView loads, the account menu opens,
+# and the Courses tab works the same way.
+# Run: maestro test .maestro/06_skool_screens.yaml
+# ============================================================
+appId: com.brody32.better
+---
+- launchApp:
+    clearState: false
+
+# ── Community tab ─────────────────────────────────────────────
+- tapOn:
+    text: "Community"
+- waitForAnimationToEnd
+- assertVisible: "Community"
+- takeScreenshot: community_loaded
+
+# Skool WebView should be visible
+- assertVisible:
+    id: "community-webview"
+
+# Account menu
+- tapOn:
+    id: "community-account-btn"
+- waitForAnimationToEnd
+- takeScreenshot: community_account_modal
+- assertVisible: "Skool Account"
+
+# Dismiss the modal
+- tapOn:
+    id: "community-modal-backdrop"
+- waitForAnimationToEnd
+- assertNotVisible: "Skool Account"
+- takeScreenshot: community_modal_dismissed
+
+# ── Courses tab ───────────────────────────────────────────────
+- tapOn:
+    text: "Courses"
+- waitForAnimationToEnd
+- assertVisible: "Courses"
+- takeScreenshot: courses_loaded
+
+- assertVisible:
+    id: "courses-webview"
+
+# Account menu
+- tapOn:
+    id: "courses-account-btn"
+- waitForAnimationToEnd
+- takeScreenshot: courses_account_modal
+
+# Dismiss
+- tapOn:
+    id: "courses-modal-backdrop"
+- waitForAnimationToEnd
+- assertNotVisible: "Skool Account"
+- takeScreenshot: courses_modal_dismissed

@@ -30,6 +30,7 @@ const CoachBooking = () => {
           <Text style={styles.headerTitle}>📅 Book with {selectedCoach.name}</Text>
         </View>
         <WebView
+          testID={`coach-webview-${selectedCoach.name}`}
           source={{ uri: selectedCoach.calendlyUrl }}
           style={styles.webview}
           javaScriptEnabled={true}

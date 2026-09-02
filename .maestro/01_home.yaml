@@ -1,0 +1,18 @@
+# ============================================================
+# Maestro E2E – 01: App launches and Home screen is visible
+# Run: maestro test .maestro/01_home.yaml
+# ============================================================
+appId: com.brody32.better     # Android package / iOS bundle ID
+---
+- launchApp:
+    clearState: true
+
+# Wait for the splash / init to finish
+- waitForAnimationToEnd
+
+# Home screen sanity check
+- assertVisible: "Welcome to Better."
+- takeScreenshot: home_loaded
+
+# Report Issue button is present
+- assertVisible: "Report Issue"

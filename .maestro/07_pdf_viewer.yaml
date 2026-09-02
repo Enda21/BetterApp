@@ -1,0 +1,56 @@
+# ============================================================
+# Maestro E2E – 07: PDF Viewer
+# Navigates to a screen that opens the PDF viewer, verifies the
+# document renders, and tests the share/open-externally button.
+#
+# Prerequisite: the app must expose a route that navigates to
+# PdfViewer with a test PDF URL.  If you have a Courses PDF
+# link, tap it here.  Adjust selectors to match your UI.
+#
+# Run: maestro test .maestro/07_pdf_viewer.yaml
+# ============================================================
+appId: com.brody32.better
+---
+- launchApp:
+    clearState: false
+
+# ── Navigate to a screen that links to a PDF ──────────────────
+- tapOn:
+    text: "Courses"
+- waitForAnimationToEnd
+
+# Allow the Skool classroom WebView to load (may take a few seconds)
+- extendedWaitUntil:
+    visible:
+      id: "courses-webview"
+    timeout: 20000
+
+# Tap any PDF link that appears inside the WebView.
+# Adjust the selector to match the text of an actual course PDF link.
+- tapOn:
+    text: ".*\\.pdf.*"
+    isRegexp: true
+- waitForAnimationToEnd
+
+# ── PDF viewer header ─────────────────────────────────────────
+- extendedWaitUntil:
+    visible:
+      id: "pdf-webview"
+    timeout: 20000
+- takeScreenshot: pdf_viewer_loaded
+
+# Back button
+- assertVisible:
+    accessibilityLabel: "Go back"
+
+# Open-externally button
+- assertVisible:
+    accessibilityLabel: "Open externally"
+- takeScreenshot: pdf_viewer_share_btn_visible
+
+# Navigate back
+- tapOn:
+    accessibilityLabel: "Go back"
+- waitForAnimationToEnd
+- assertVisible: "Courses"
+- takeScreenshot: pdf_viewer_after_back

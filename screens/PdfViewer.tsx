@@ -65,6 +65,7 @@ const PdfViewer: React.FC = () => {
 
       {!!viewerUri && (
         <WebView
+          testID="pdf-webview"
           originWhitelist={["*"]}
           source={{ uri: viewerUri }}
           style={styles.webview}

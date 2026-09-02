@@ -14,6 +14,7 @@ export default function Community() {
       <View style={styles.headerRow}>
         <Text style={styles.header}>Community</Text>
         <TouchableOpacity
+          testID="community-account-btn"
           style={styles.accountButton}
           onPress={() => setShowAccountMenu(true)}
         >
@@ -30,6 +31,7 @@ export default function Community() {
       </View>
 
       <WebView
+        testID="community-webview"
         source={{ uri: SKOOL_COMMUNITY_URL }}
         style={styles.webview}
         javaScriptEnabled={true}
@@ -52,8 +54,9 @@ export default function Community() {
         animationType="fade"
         onRequestClose={() => setShowAccountMenu(false)}
       >
-        <View style={styles.modalOverlay}>
+        <View testID="community-account-modal" style={styles.modalOverlay}>
           <TouchableOpacity
+            testID="community-modal-backdrop"
             style={StyleSheet.absoluteFillObject}
             activeOpacity={1}
             onPress={() => setShowAccountMenu(false)}

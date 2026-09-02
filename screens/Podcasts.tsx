@@ -464,7 +464,7 @@ export default function Podcasts() {
     const cleanDescription = item.description ? stripHtml(item.description) : '';
 
     return (
-      <View style={styles.episodeCard}>
+      <View testID={`episode-row-${item.id}`} style={styles.episodeCard}>
         {/* Logo in top left corner */}
         <Image
           source={require('../assets/KMFpODCAST.png')}
@@ -495,6 +495,7 @@ export default function Podcasts() {
           <View style={styles.playerContainer}>
             {/* Play/Pause Button */}
             <TouchableOpacity
+              testID={`play-btn-${item.id}`}
               style={styles.playButton}
               onPress={() => isPlaying ? pauseEpisode() : (isCurrentEpisode ? resumeEpisode() : playEpisode(item))}
             >
@@ -703,13 +704,13 @@ export default function Podcasts() {
 
         {/* Episodes List Loading/Error States */}
         {loading && (
-          <View style={styles.centerContent}>
+          <View testID="podcasts-loading" style={styles.centerContent}>
             <ActivityIndicator size="large" color="#4B3BE7" />
             <Text style={styles.loadingText}>Loading episodes...</Text>
           </View>
         )}
         {!loading && error && (
-          <View style={styles.centerContent}>
+          <View testID="podcasts-error" style={styles.centerContent}>
             <Text style={styles.errorText}>{error}</Text>
             <TouchableOpacity onPress={fetchEpisodes} style={styles.retryButton}>
               <Text style={styles.retryButtonText}>Retry</Text>
@@ -733,6 +734,7 @@ export default function Podcasts() {
       <View style={styles.topSearchContainer}>
         <View style={styles.topSearchRow}>
           <TextInput
+            testID="podcasts-search"
             style={[styles.searchInput, styles.searchInputFlex]}
             placeholder="Search episodes..."
             placeholderTextColor="#999"

@@ -1,0 +1,58 @@
+# ============================================================
+# Maestro E2E – 02: Tab bar navigation
+# Verifies every bottom-tab destination loads without crashing.
+# Run: maestro test .maestro/02_navigation.yaml
+# ============================================================
+appId: com.brody32.better
+---
+- launchApp:
+    clearState: false
+
+- waitForAnimationToEnd
+
+# ── TrueCoach tab ─────────────────────────────────────────────
+- tapOn:
+    text: "TrueCoach"
+- waitForAnimationToEnd
+- takeScreenshot: tab_truecoach
+
+# ── Courses tab ───────────────────────────────────────────────
+- tapOn:
+    text: "Courses"
+- waitForAnimationToEnd
+- assertVisible: "Courses"
+- takeScreenshot: tab_courses
+
+# ── Podcasts tab ──────────────────────────────────────────────
+- tapOn:
+    text: "Podcasts"
+- waitForAnimationToEnd
+- takeScreenshot: tab_podcasts
+
+# ── Community tab ─────────────────────────────────────────────
+- tapOn:
+    text: "Community"
+- waitForAnimationToEnd
+- assertVisible: "Community"
+- takeScreenshot: tab_community
+
+# ── Book a Call tab ───────────────────────────────────────────
+- tapOn:
+    text: "Book a Call"
+- waitForAnimationToEnd
+- assertVisible: "Book a Call"
+- takeScreenshot: tab_book_a_call
+
+# ── Check In tab ──────────────────────────────────────────────
+- tapOn:
+    text: "Check In"
+- waitForAnimationToEnd
+- assertVisible: "Weekly Check-In"
+- takeScreenshot: tab_check_in
+
+# ── Home tab (return) ─────────────────────────────────────────
+- tapOn:
+    text: "Home"
+- waitForAnimationToEnd
+- assertVisible: "Welcome to Better."
+- takeScreenshot: tab_home_return

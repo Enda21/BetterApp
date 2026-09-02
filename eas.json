@@ -28,6 +28,11 @@
     }
   },
   "submit": {
-    "production": { "android": { "track": "internal" } }
+    "production": {
+      "android": {
+        "track": "internal",
+        "serviceAccountKeyPath": "C:/Users/pbrod/trim-habitat-415818-816a517c2bbd.json"
+      }
+    }
   }
 }

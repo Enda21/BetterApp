@@ -1,0 +1,63 @@
+# ============================================================
+# Maestro E2E – 03: Podcasts load and play
+# Verifies the episode list loads, search works, and a podcast
+# starts playing when tapped.
+# Run: maestro test .maestro/03_podcasts.yaml
+# ============================================================
+appId: com.brody32.better
+---
+- launchApp:
+    clearState: false
+
+- tapOn:
+    text: "Podcasts"
+
+# ── Episode list loads ────────────────────────────────────────
+# The screen fetches from the Transistor API; allow up to 20 s
+- extendedWaitUntil:
+    visible: ".*Episode.*"
+    isRegexp: true
+    timeout: 20000
+- takeScreenshot: podcasts_list_loaded
+
+# ── Search filters episodes ───────────────────────────────────
+- tapOn:
+    id: "podcasts-search"
+- inputText: "Mindset"
+- waitForAnimationToEnd
+- takeScreenshot: podcasts_search_mindset
+
+- clearText
+- waitForAnimationToEnd
+- takeScreenshot: podcasts_search_cleared
+
+# ── Tap the first episode to start playback ───────────────────
+- tapOn:
+    index: 0
+    id: "episode-row-.*"
+    isRegexp: true
+- waitForAnimationToEnd
+- takeScreenshot: podcasts_playing
+
+# Verify the play indicator / now-playing bar is visible
+- assertVisible:
+    id: "now-playing-bar"
+
+# ── Pause ─────────────────────────────────────────────────────
+- tapOn:
+    id: "playback-toggle-btn"
+- waitForAnimationToEnd
+- takeScreenshot: podcasts_paused
+
+# ── Resume ────────────────────────────────────────────────────
+- tapOn:
+    id: "playback-toggle-btn"
+- waitForAnimationToEnd
+- takeScreenshot: podcasts_resumed
+
+# ── Playback speed cycle ──────────────────────────────────────
+- tapOn:
+    id: "playback-speed-btn"
+- waitForAnimationToEnd
+- assertVisible: "1.5x"
+- takeScreenshot: podcasts_speed_1_5x

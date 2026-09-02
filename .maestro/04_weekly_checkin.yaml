@@ -1,0 +1,54 @@
+# ============================================================
+# Maestro E2E – 04: Weekly Check-In
+# Verifies both check-in flows open and can be dismissed.
+# Run: maestro test .maestro/04_weekly_checkin.yaml
+# ============================================================
+appId: com.brody32.better
+---
+- launchApp:
+    clearState: false
+
+- tapOn:
+    text: "Check In"
+
+- waitForAnimationToEnd
+- assertVisible: "Weekly Check-In"
+- assertVisible: "Rapid Fire"
+- assertVisible: "Progress Pit Stop"
+- takeScreenshot: checkin_landing
+
+# ── Rapid Fire ────────────────────────────────────────────────
+- tapOn:
+    text: "Rapid Fire"
+- waitForAnimationToEnd
+- takeScreenshot: checkin_rapid_fire_opened
+
+# The Typeform loads in a WebView; wait for some content
+- extendedWaitUntil:
+    visible:
+      id: "form-webview"
+    timeout: 15000
+
+# Close / go back
+- tapOn:
+    id: "form-webview-close"
+- waitForAnimationToEnd
+- assertVisible: "Weekly Check-In"
+- takeScreenshot: checkin_after_rapid_fire_close
+
+# ── Progress Pit Stop ─────────────────────────────────────────
+- tapOn:
+    text: "Progress Pit Stop"
+- waitForAnimationToEnd
+- takeScreenshot: checkin_progress_pit_stop_opened
+
+- extendedWaitUntil:
+    visible:
+      id: "progress-pit-stop"
+    timeout: 15000
+
+- tapOn:
+    id: "progress-pit-stop-close"
+- waitForAnimationToEnd
+- assertVisible: "Weekly Check-In"
+- takeScreenshot: checkin_after_pit_stop_close

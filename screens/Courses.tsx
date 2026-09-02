@@ -28,6 +28,7 @@ export default function Courses() {
         <View style={styles.headerRow}>
           <Text style={styles.header}>Courses</Text>
           <TouchableOpacity
+            testID="courses-account-btn"
             style={styles.accountButton}
             onPress={() => setShowAccountMenu(true)}
           >
@@ -45,6 +46,7 @@ export default function Courses() {
       </View>
 
       <WebView
+        testID="courses-webview"
         key={webViewKey}
         source={{ uri: SKOOL_CLASSROOM_URL }}
         style={styles.webview}
@@ -68,8 +70,9 @@ export default function Courses() {
         animationType="fade"
         onRequestClose={() => setShowAccountMenu(false)}
       >
-        <View style={styles.modalOverlay}>
+        <View testID="courses-account-modal" style={styles.modalOverlay}>
           <TouchableOpacity
+            testID="courses-modal-backdrop"
             style={StyleSheet.absoluteFillObject}
             activeOpacity={1}
             onPress={() => setShowAccountMenu(false)}

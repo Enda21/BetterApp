@@ -1,0 +1,73 @@
+# ============================================================
+# Maestro E2E – 05: Coach Booking (Calendly)
+# Verifies each coach card opens a Calendly WebView and the
+# user can navigate back to the coach list.
+# Run: maestro test .maestro/05_coach_booking.yaml
+# ============================================================
+appId: com.brody32.better
+---
+- launchApp:
+    clearState: false
+
+- tapOn:
+    text: "Book a Call"
+
+- waitForAnimationToEnd
+- assertVisible: "Book a Call"
+- takeScreenshot: coach_booking_list
+
+# ── Book with Paul ────────────────────────────────────────────
+- tapOn:
+    text: "Paul"
+- waitForAnimationToEnd
+- assertVisible: "Book with Paul"
+- takeScreenshot: coach_booking_paul
+
+# Wait for Calendly page to load (network dependent)
+- extendedWaitUntil:
+    visible:
+      id: "coach-webview-Paul"
+    timeout: 20000
+
+- tapOn:
+    text: "← Back"
+- waitForAnimationToEnd
+- assertVisible: "Book a Call"
+- takeScreenshot: coach_booking_after_paul_back
+
+# ── Book with Owen ────────────────────────────────────────────
+- tapOn:
+    text: "Owen"
+- waitForAnimationToEnd
+- assertVisible: "Book with Owen"
+- takeScreenshot: coach_booking_owen
+
+- tapOn:
+    text: "← Back"
+- waitForAnimationToEnd
+- assertVisible: "Book a Call"
+
+# ── Book with Owen M ──────────────────────────────────────────
+- tapOn:
+    text: "Owen M"
+- waitForAnimationToEnd
+- assertVisible: "Book with Owen M"
+- takeScreenshot: coach_booking_owen_m
+
+- tapOn:
+    text: "← Back"
+- waitForAnimationToEnd
+- assertVisible: "Book a Call"
+
+# ── Book with Thomas ──────────────────────────────────────────
+- tapOn:
+    text: "Thomas"
+- waitForAnimationToEnd
+- assertVisible: "Book with Thomas"
+- takeScreenshot: coach_booking_thomas
+
+- tapOn:
+    text: "← Back"
+- waitForAnimationToEnd
+- assertVisible: "Book a Call"
+- takeScreenshot: coach_booking_all_coaches_done

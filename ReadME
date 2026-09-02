@@ -33,3 +33,5 @@ eas submit --platform ios
 5. In Firebase Console:
    - Go to Analytics -> Events (to verify events arrive)
    - Go to Analytics -> Engagement -> Pages and screens (to see most-used screens)
+
+   npx eas-cli submit --platform android --id e0b29851-f31b-48a4-a067-d3df971ddcb8 --non-interactive 2>&1 | tail -25
