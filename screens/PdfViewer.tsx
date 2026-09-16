@@ -54,7 +54,13 @@ const PdfViewer: React.FC = () => {
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn} accessibilityLabel="Go back">
+        <TouchableOpacity
+          onPress={() => navigation.goBack()}
+          style={styles.backBtn}
+          hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+          accessibilityRole="button"
+          accessibilityLabel="Go back"
+        >
           <Text style={styles.backText}>‹ Back</Text>
         </TouchableOpacity>
         <Text style={styles.title} numberOfLines={1}>{title}</Text>
@@ -120,8 +126,8 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     gap: 8,
   },
-  backBtn: { padding: 8 },
-  backText: { color: '#FFFFFF', fontSize: 16, fontWeight: '600' },
+  backBtn: { padding: 10, minHeight: 44, minWidth: 44, justifyContent: 'center' },
+  backText: { color: '#FFFFFF', fontSize: 18, fontWeight: '600' },
   title: { color: '#FFFFFF', fontSize: 16, fontWeight: '700', flex: 1 },
   actionBtn: { padding: 8 },
   actionText: { color: '#FFFFFF', fontSize: 16, fontWeight: '600' },

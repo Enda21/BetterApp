@@ -39,7 +39,13 @@ const LessonViewer: React.FC<any> = ({ route }: any) => {
             <View style={{padding:20}}><Text>No video available.</Text></View>
           )}
         </View>
-        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
+        <TouchableOpacity
+          onPress={() => navigation.goBack()}
+          style={styles.backBtn}
+          hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+          accessibilityRole="button"
+          accessibilityLabel="Go back"
+        >
           <Text style={styles.backText}>‹ Back</Text>
         </TouchableOpacity>
       </View>
@@ -55,8 +61,8 @@ const styles = StyleSheet.create({
   summary: { fontSize: 16, color: '#222', marginBottom: 12 },
   videoContainer: { height: (width * 9) / 16, width: '100%', backgroundColor: '#000' },
   webview: { flex: 1 },
-  backBtn: { marginTop: 10, alignSelf: 'flex-start', padding: 6 },
-  backText: { color: '#0947aa', fontSize: 16 },
+  backBtn: { marginTop: 10, alignSelf: 'flex-start', paddingVertical: 12, paddingHorizontal: 10, minHeight: 44, minWidth: 44, justifyContent: 'center' },
+  backText: { color: '#0947aa', fontSize: 18, fontWeight: '600' },
 });
 
 export default LessonViewer;

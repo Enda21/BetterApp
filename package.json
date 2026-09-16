@@ -7,7 +7,8 @@
     "android": "expo run:android",
     "ios": "expo run:ios",
     "web": "expo start --web",
-    "postinstall": "patch-package",
+    "postinstall": "patch-package && node scripts/ensure-hermes-exec.js",
+    "eas-build-post-install": "node scripts/ensure-hermes-exec.js",
     "test": "jest --passWithNoTests",
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage"

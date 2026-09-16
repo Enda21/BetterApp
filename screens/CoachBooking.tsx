@@ -21,9 +21,12 @@ const CoachBooking = () => {
     return (
       <View style={styles.container}>
         <View style={styles.header}>
-          <TouchableOpacity 
+          <TouchableOpacity
             onPress={() => setSelectedCoach(null)}
             style={styles.backButton}
+            hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+            accessibilityRole="button"
+            accessibilityLabel="Go back"
           >
             <Text style={styles.backButtonText}>← Back</Text>
           </TouchableOpacity>
@@ -94,9 +97,14 @@ const styles = StyleSheet.create({
   },
   backButton: {
     marginBottom: 10,
+    paddingVertical: 10,
+    paddingHorizontal: 4,
+    minHeight: 44,
+    justifyContent: 'center',
+    alignSelf: 'flex-start',
   },
   backButtonText: {
-    fontSize: 16,
+    fontSize: 18,
     color: '#4B3BE7',
     fontWeight: '600',
   },

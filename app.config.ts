@@ -6,6 +6,7 @@ export default {
     name: "Better",
     slug: "betterapp",
     owner: "brody32", // optional but recommended
+    jsEngine: "jsc",
     version: "1.1.14",
     icon: "./assets/BetterLogo2.png",
     extra: {
