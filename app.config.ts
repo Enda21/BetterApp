@@ -29,7 +29,7 @@ export default {
     },
     android: {
       package: "com.brody32.better",
-      versionCode: 18,
+      versionCode: 19,
       googleServicesFile: "./google-services.json",
       Permissions: [],
       foregroundImage: "./assets/adaptive-icon.png", // transparent PNG

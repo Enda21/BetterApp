@@ -13,7 +13,7 @@
 // expo-build-properties ios.buildReactNativeFromSource = true (see app.config.ts),
 // which disables the prebuilt React-Core (RCT_USE_PREBUILT_RNCORE) that conflicts
 // with static frameworks.
-const { withDangerousMod } = require("@expo/config-plugins");
+const { withDangerousMod } = require("expo/config-plugins");
 const fs = require("fs");
 const path = require("path");
 

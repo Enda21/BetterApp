@@ -1,5 +1,5 @@
 // plugins/with-truecoach-queries.js
-const { withInfoPlist, withAndroidManifest } = require("@expo/config-plugins");
+const { withInfoPlist, withAndroidManifest } = require("expo/config-plugins");
 
 /** @param {any} config @param {{scheme?: string, androidPackages?: string[]}} opts */
 function withTrueCoachQueries(config, opts = {}) {
