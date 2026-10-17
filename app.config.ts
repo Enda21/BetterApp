@@ -32,10 +32,10 @@ export default {
       versionCode: 18,
       googleServicesFile: "./google-services.json",
       Permissions: [],
-       foregroundImage: "./assets/adaptive-icon.png", // transparent PNG
-        backgroundColor: "#FFFFFF",
-        // optional but nice for Android 13 "themed icons":
-        monochromeImage: "./assets/adaptive-icon-mono.png"
+      foregroundImage: "./assets/adaptive-icon.png", // transparent PNG
+      backgroundColor: "#FFFFFF",
+      // optional but nice for Android 13 "themed icons":
+      monochromeImage: "./assets/adaptive-icon-mono.png"
     },
     plugins: [
       "@react-native-firebase/app",
